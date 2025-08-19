@@ -2,23 +2,20 @@
 Client Asset Manager for R2 Integration
 Handles asset downloading, local caching, and integration with the game client.
 """
-import os
-import requests
+
 import hashlib
 import json
 import time
-import ctypes
 import xxhash   
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple, Any
-from net.protocol import Message, MessageType
-from logger import setup_logger
-import settings
+from tools.logger import setup_logger
+import tools.settings as settings
 import shutil
 import sdl3
-from Sprite import Sprite
+from core.Sprite import Sprite
 from storage.StorageManager import StorageManager
-from net.DownloadManager import DownloadManager  
+#from net.DownloadManager import DownloadManager  
 
 logger = setup_logger(__name__)
 
@@ -45,8 +42,8 @@ class ClientAssetManager:
         try:
             download_dir = self.cache_dir / "downloads"
             download_dir.mkdir(exist_ok=True)
-            self.DownloadManager = DownloadManager(str(download_dir))
-            logger.info(f"DownloadManager initialized with dir: {download_dir}")
+            #self.DownloadManager = DownloadManager(str(download_dir))
+            logger.info(f"DownloadManager  temporary disabled: {download_dir}")
         except Exception as e:
             logger.error(f"Failed to initialize DownloadManager: {e}")
             self.DownloadManager = None
@@ -702,5 +699,5 @@ class ClientAssetManager:
             logger.error(f"Error starting upload for asset {asset_id}: {e}")
             return None
     
-    # File path is now provided by StorageManager completion data
+
 

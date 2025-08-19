@@ -1,18 +1,17 @@
-import ctypes
 from typing import Dict, Any, List, Optional, TYPE_CHECKING
-from core_table.actions_protocol import ActionsProtocol, ActionResult, Position, LAYERS
+from actions_protocol import ActionsProtocol, ActionResult, Position, LAYERS
 import uuid
 import copy
 import os
 import time
 from pathlib import Path
-from net.protocol import Message, MessageType
-from logger import setup_logger
+from tools.logger import setup_logger
 if TYPE_CHECKING:
-    from Context import Context
-    from ContextTable import ContextTable
-    from Sprite import Sprite
-    from AssetManager import ClientAssetManager
+    from core.Context import Context
+    from core.ContextTable import ContextTable
+    from core.Sprite import Sprite
+    from storage.AssetManager import ClientAssetManager
+    from gui.gui_actions_bridge import GuiActionsBridge
 
 
 
@@ -193,7 +192,7 @@ class Actions(ActionsProtocol):
         self.layer_visibility = {layer: True for layer in LAYERS.keys()}
         self.AssetManager: Optional[ClientAssetManager] = None
         self.pending_upload_operations: Dict[str, str] = {}  # asset_id -> file_path
-        self.actions_bridge = None  # Will be connected to GUI actions bridge later
+        self.actions_bridge: Optional[GuiActionsBridge] = None  # Will be connected to GUI actions bridge later
 
     def _add_to_history(self, action: Dict[str, Any]):
         """Add action to history for undo/redo functionality"""

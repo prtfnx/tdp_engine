@@ -1,6 +1,6 @@
 import sdl3
 import ctypes
-from logger import setup_logger
+from tools.logger import setup_logger
 import os
 import time
 from typing import List, Tuple

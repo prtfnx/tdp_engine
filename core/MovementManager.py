@@ -1,8 +1,7 @@
 import sdl3
 import ctypes
 from tools.logger import setup_logger
-import numpy as np
-from net.protocol import Message, MessageType
+
 
 logger = setup_logger(__name__)
 

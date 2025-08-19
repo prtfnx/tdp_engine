@@ -8,9 +8,9 @@ import uuid
 from pathlib import Path
 from typing import Optional, List, Dict, Any, Union, Callable
 from concurrent.futures import ThreadPoolExecutor
-import logger
+from tools.logger import setup_logger
 
-logger = logger.setup_logger(__name__)
+logger = setup_logger(__name__)
 
 class StorageManager:
     """Non-blocking storage manager for SDL apps using thread pool."""

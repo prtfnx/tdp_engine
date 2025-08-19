@@ -9,9 +9,9 @@ import uuid
 import sys
 import os
 from gui.tools.measurement_tool import MeasurementTool
-from core_table.actions_protocol import ActionResult, Position
+from core.actions_protocol import ActionResult, Position
 
-from logger import setup_logger
+from tools.logger import setup_logger
 logger = setup_logger(__name__)
 
 class GuiActionsBridge:

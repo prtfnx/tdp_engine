@@ -7,17 +7,15 @@ Features ImGui native resizing capabilities
 
 from imgui_bundle import imgui
 from imgui_bundle.python_backends.sdl3_backend import SDL3Renderer
-import OpenGL.GL as gl
 import sdl3
-import ctypes
-
 import os
 import platform
 import time
-from typing import Dict, Any, Optional, Tuple, List
+import context_menu
+from typing import Dict
 from dataclasses import dataclass
 from enum import Enum
-import context_menu
+
 # Import panel classes
 from .panels import (
     ToolsPanel,
@@ -40,7 +38,7 @@ from .windows.character_creator import CharacterCreator
 # Import GUI actions bridge
 from .gui_actions_bridge import GuiActionsBridge
 
-from logger import setup_logger
+from tools.logger import setup_logger
 logger = setup_logger(__name__)
 
 

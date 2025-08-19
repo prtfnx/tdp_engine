@@ -1,10 +1,8 @@
 # System imports
 import sys
-import time
 import sdl3
-import threading
-from typing import Optional
-from ctypes import c_int, c_char_p, byref
+from typing import TYPE_CHECKING
+from ctypes import c_int, c_char_p, c_void_p
 # Core imports
 from core import event_sys, MovementManager
 from core.Context import Context
@@ -26,6 +24,11 @@ if settings.GUI_ENABLED:
 from storage.StorageManager import StorageManager
 from storage.AssetManager import ClientAssetManager
 
+if TYPE_CHECKING:
+    SDL_Renderer = c_void_p
+    SDL_Window = c_void_p 
+    SDL_GLContext = c_void_p
+       
 
 logger = setup_logger(__name__)
 
@@ -228,11 +231,7 @@ def SDL_AppIterate(context):
     # Render paint system if active (in table area)
     if PaintManager.is_paint_mode_active():
         PaintManager.render_paint_system()    
-    # Async event queue for network and io
-    if not context.queue_to_read.empty():
-        data = context.queue_to_read.get()
-        handle_information(data, context)
-          # Handle unified I/O operations - Process async storage and download operations
+    # Async event queue for network and io   
     if context.AssetManager and context.Actions:
         completed = context.AssetManager.process_all_completed_operations()        
         # Process completed operations through Actions

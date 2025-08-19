@@ -1,25 +1,20 @@
-import ctypes
-import os
+from ctypes import c_void_p, c_float, c_int
 import queue
 import time
 import uuid
 from typing import Optional, Dict, List, Any, Union, TYPE_CHECKING
-from net.protocol import Message, MessageType
-from Actions import Actions  
-from GeometricManager import GeometricManager
-from ContextTable import ContextTable
-from AssetManager import ClientAssetManager
-from RenderManager import RenderManager
-from Sprite import Sprite
-from logger import setup_logger
+from core.Actions import Actions
+from core.ContextTable import ContextTable
+from core.Sprite import Sprite  
+from render.RenderManager import RenderManager
+from render.GeometricManager import GeometricManager
+from storage.AssetManager import ClientAssetManager
+from tools.logger import setup_logger
 
 # SDL3 type hints using actual SDL3 types
-if TYPE_CHECKING:  
-    from ctypes import c_void_p
-    from CompendiumManager import CompendiumManager
-    from CharacterManager import CharacterManager
-    from LightManager import LightManager
-    from LayoutManager import LayoutManager
+if TYPE_CHECKING:
+    from render.LightManager import LightManager
+    from render.LayoutManager import LayoutManager
     from gui.gui_imgui import SimplifiedGui
     SDL_Renderer = c_void_p
     SDL_Window = c_void_p 
@@ -48,7 +43,7 @@ class Context:
                  base_width: int, 
                  base_height: int) -> None:
         
-        self.step: ctypes.c_float = ctypes.c_float(1)
+        self.step: c_float = c_float(1)
         self.sprites_list: List[Sprite] = []
         # Graphics context
         self.window: SDL_Window = window
@@ -58,8 +53,8 @@ class Context:
         # Window dimensions
         self.base_width: int = base_width
         self.base_height: int = base_height
-        self.window_width: ctypes.c_int = ctypes.c_int()
-        self.window_height: ctypes.c_int = ctypes.c_int()
+        self.window_width: c_int = c_int()
+        self.window_height: c_int = c_int()
        
         # For manage  mouse state:
         self.resizing: bool = False
@@ -88,9 +83,8 @@ class Context:
         self.list_of_tables: List[ContextTable] = []       
         # Managers
         self.LayoutManager: Optional['LayoutManager'] = None
-        self.LightingManager: Optional['LightManager'] = None        
-        self.CompendiumManager: Optional['CompendiumManager'] = None
-        self.CharacterManager: Optional['CharacterManager'] = None
+        self.LightingManager: Optional['LightManager'] = None     
+
         self.GeometryManager: Optional[GeometricManager] = None
         self.AssetManager: Optional[ClientAssetManager] = None
         self.RenderManager: Optional[RenderManager] = None

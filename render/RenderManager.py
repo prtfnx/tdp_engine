@@ -3,16 +3,15 @@ import ctypes
 import logging
 import math
 import numpy as np
-from logger import setup_logger
+from tools.logger import setup_logger
 from typing import Optional, Dict, List, Any, Union, Tuple, TYPE_CHECKING
-from Sprite import Sprite
+from core.Sprite import Sprite
 from dataclasses import dataclass
-from ContextTable import ContextTable
+from core.ContextTable import ContextTable
 from functools import lru_cache
 if TYPE_CHECKING:
     from LightManager import LightManager
     from GeometricManager import GeometricManager
-    from ContextTable import ContextTable
 logger = setup_logger(__name__,level=logging.INFO )
 
 @dataclass

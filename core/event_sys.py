@@ -2,12 +2,13 @@ import uuid
 import sdl3
 import ctypes
 import json
-import PaintManager
+
 import math
 import clipboard_sys  # Add clipboard import
 import dragdrop_sys   # Add drag drop import
-from MovementManager import sync_sprite_move
-from logger import setup_logger
+from core.MovementManager import sync_sprite_move
+import render.PaintManager
+from tools.logger import setup_logger
 logger = setup_logger(__name__)
 
 class Directions:

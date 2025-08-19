@@ -1,4 +1,4 @@
-from logger import setup_logger
+from tools.logger import setup_logger
 import ctypes
 import sdl3
 

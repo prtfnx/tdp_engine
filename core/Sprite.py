@@ -1,15 +1,11 @@
 import ctypes
-from logger import setup_logger
+from tools.logger import setup_logger
 from typing import Optional, Union, Dict, Any, TYPE_CHECKING
-import os
-import io_sys
 import sdl3
 import uuid
 
 # Import types for type checking
-if TYPE_CHECKING:
-    from core_table.Character import Character
-    from core_table.entities import Spell
+if TYPE_CHECKING:     
     from Context import Context
     from ContextTable import ContextTable
 
@@ -23,7 +19,7 @@ class Sprite:
                  texture_path: Union[str, bytes], 
                  scale_x: float = 1, 
                  scale_y: float = 1,
-                 character: Optional['Character'] = None, 
+                 character: Optional[Any] = None, 
                  moving: bool = False, 
                  speed: Optional[float] = None, 
                  collidable: bool = False,
@@ -84,8 +80,9 @@ class Sprite:
         # Load texture last, after everything is initialized
         logger.info(f"created sprite {self.sprite_id} at ({coord_x}, {coord_y}) with texture path {texture_path}")
         try:
-            io_sys.load_texture(self, context)
+            #io_sys.load_texture(self, context)
             #self.set_texture(texture_path)
+            pass
         except Exception as e:
             logger.error(f"Failed to load texture {texture_path}: {e}")
             self.texture = None
@@ -119,7 +116,7 @@ class Sprite:
         ctx = context or self.context
         
         try:
-            self.texture = io_sys.load_texture(self, ctx)
+            #self.texture = io_sys.load_texture(self, ctx)
             if not self.texture:
                 logger.error(f"Failed to load texture: {texture_path}")
                 return False

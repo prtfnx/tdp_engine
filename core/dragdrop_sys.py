@@ -8,8 +8,8 @@ import os
 from typing import Optional
 import sdl3
 import ctypes
-from core_table.actions_protocol import Position
-from logger import setup_logger
+from core.actions_protocol import Position
+from tools.logger import setup_logger
 
 logger = setup_logger(__name__)
 

@@ -1,5 +1,5 @@
 """
-TTRPG System Settings
+TDP_Engine Settings
 Global settings and constants for the entire application.
 All settings are CAPITAL LETTERS as per Python conventions.
 """
@@ -25,8 +25,8 @@ except ImportError:
 # ============================================================================
 # APPLICATION SETTINGS
 # ============================================================================
-APP_NAME = "TTRPG System"
-APP_VERSION = "0.0.08"
+APP_NAME = "TDP_Engine"
+APP_VERSION = "0.0.01"
 DEBUG_MODE = True
 
 # ============================================================================

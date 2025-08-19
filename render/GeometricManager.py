@@ -1,14 +1,12 @@
 import numpy as np
-#from skimage import draw
-from typing import List, Tuple, Set, Optional, Callable, Any, TYPE_CHECKING
+from typing import List, Tuple, Set, Optional, Callable, Any
 import time
 import functools
-
 import sdl3
 import ctypes
 import logging
-from logger import setup_logger
-from Sprite import Sprite  
+from tools.logger import setup_logger
+from core.Sprite import Sprite  
 
 logger = setup_logger(__name__, level=logging.INFO)
 
@@ -73,7 +71,7 @@ def profile_function(func: Callable) -> Callable:
 
 class GeometricManager:
     """
-    FAST visibility polygon generation using exact user requirements:
+    FAST visibility polygon generation:
     
     Logic:
     1. Cast rays ONLY to obstacle start/end points (critical rays)
@@ -88,11 +86,6 @@ class GeometricManager:
     - Obstacle collections: numpy array of shape (N, 2, 2) for N line segments
     """
     
-    # @staticmethod
-    # @profile_function
-    # def line(r0: int, c0: int, r1: int, c1: int) -> Tuple[np.ndarray, np.ndarray]:
-    #     """Using skimage.draw for line coordinates"""
-    #     return draw.line(r0, c0, r1, c1)
     @staticmethod
     def sprites_to_obstacles_numpy(sprite_list: Optional[List[Sprite]]) -> np.ndarray:
         """
@@ -369,17 +362,10 @@ class GeometricManager:
         """
         Simple and fast gap detection using numpy mask operations.
         Find gaps between obstacle coverage and return angles to it.        
-        """
-        #TODO: fix logic. Temprorary solution to back to vectors:
-        #if np.any(angles_to_endpoints < 0.2) or np.any(angles_to_endpoints > 6.0):
-        #    return GeometricManager._find_arc_gaps_fast_vector(angles_to_endpoints, step_to_gap=step_to_gap)
-        
+        """       
         # Convert full circle in radians 6.28 to step_to_gap segments
-        mask_size= 628 // step_to_gap
-        #print(f"step_to_gap: {step_to_gap}, size: {mask_size}")        
+        mask_size = 628 // step_to_gap
         # If no obstacles, return full circle
-        min_gap_threshold = np.pi / 36
-        shadow_angle = np.pi / 72
         if len(angles_to_endpoints) == 0:
             return np.zeros(mask_size, dtype=bool)
         # Form mask for angles to obstacles
@@ -387,51 +373,24 @@ class GeometricManager:
             mask = np.zeros(mask_size, dtype=bool)
             for i in range(0,len(angles_to_endpoints) - 1, 2):
                 angular_span = angles_to_endpoints[i+1] - angles_to_endpoints[i]
-
                 # Handle wraparound case
                 if angular_span < 0:
                     angular_span += 2 * np.pi
-                #first_norm_vector = int(angles_to_endpoints[i]*100// step_to_gap)
-                #second_norm_vector = int(angles_to_endpoints[i+1]*10000 // step_to_gap)
                 first_norm_vector = int((angles_to_endpoints[i] / (2 * np.pi)) * mask_size) % mask_size
                 second_norm_vector = int((angles_to_endpoints[i+1] / (2 * np.pi)) * mask_size) % mask_size
-
-                #print(f"first_norm_vector: {first_norm_vector}, second_norm_vector: {second_norm_vector}")
-                #print(f"i: {i}")
-                #print(f"angular span {angular_span}")
-                #print(f"first_norm_vector: {first_norm_vector}, second_norm_vector: {second_norm_vector}")
                 # Excess checks to ensure indices are within bounds, and try to cover obstacles excessively
                 if angular_span < np.pi:
-                    #print(f"Angular span is less than pi: {angular_span}")
                     if first_norm_vector <= second_norm_vector:
-                        #print(f"First norm vector <= second norm vector: {first_norm_vector} <= {second_norm_vector}")
                         if first_norm_vector > 1:
                             if second_norm_vector < mask_size:
                                 mask[first_norm_vector-1:second_norm_vector+1] = True
                             else:
                                 mask[first_norm_vector-1:second_norm_vector] = True
-                        # elif second_norm_vector < mask_size:
-                        #     mask[second_norm_vector:first_norm_vector+1] = True
-                        # else:
-                        #     mask[second_norm_vector:first_norm_vector] = True
-                    # reverse case
                     else:
-                        #print(f"Second norm vector >= first norm vector: {first_norm_vector} >= {second_norm_vector}")
-                        # if second_norm_vector > 1:
-                        #     if first_norm_vector < mask_size:
-                        #         mask[second_norm_vector-1:first_normector+1] = True
-                        #     else:
-                        #         mask[second_normector:first_normulator] = True
-                        # elif first_norm_vector < mask_size:
-                        #     mask[second_normector:first_normulator+1] = True
-                        # else:
-                        #     mask[second_normector:first_normulator] = True
                         mask[first_norm_vector-1:mask_size] = True
                         mask[0:second_norm_vector+1] = True
                 else:
-                    #print(f"Angular span is more than pi: {angular_span}")
-                    if first_norm_vector < second_norm_vector:
-                        #print(f"First norm vector <= second norm vector: {first_norm_vector} <= {second_norm_vector}")
+                    if first_norm_vector < second_norm_vector:                       
                         if first_norm_vector < mask_size:
                             if second_norm_vector > 1:
                                 mask[0:first_norm_vector+1] = True
@@ -445,19 +404,8 @@ class GeometricManager:
                         else:
                             mask[0:first_norm_vector] = True
                             mask[second_norm_vector-1:mask_size] = True
-
                     # reverse case
-                    else:
-                        #print(f"Second norm vector >= first norm vector: {second_norm_vector} >= {first_norm_vector}")
-                        # if second_norm_vector > 1:
-                        #     if first_norm_vector < mask_size:
-                        #         mask[second_norm_vector-1:first_norm_vector+1] = True
-                        #     else:
-                        #         mask[second_normector:first_normulator] = True
-                        # elif first_norm_vector < mask_size:
-                        #     mask[second_normector:first_normulator+1] = True
-                        # else:
-                        #     mask[second_normector:first_normulator] = True
+                    else:                       
                         if second_norm_vector > 1:
                             if first_norm_vector < mask_size:
                                 mask[second_norm_vector-1:first_norm_vector+1] = True   
@@ -467,7 +415,6 @@ class GeometricManager:
                             mask[second_norm_vector:first_norm_vector+1] = True
                         else:
                             mask[second_norm_vector:first_norm_vector] = True
-            #print(f"Mask after angles: {mask}")
             return mask
             
 

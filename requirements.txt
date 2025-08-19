@@ -1,0 +1,9 @@
+# Graphics & GUI
+imgui-bundle>=1.2.0
+pysdl3>=0.9.8b2
+# Scientific Computing
+numpy>=1.24.0
+# Storage & File Management
+xxhash >=3.4.0
+
+
