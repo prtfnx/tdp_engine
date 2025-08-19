@@ -11,6 +11,7 @@ from functools import lru_cache
 if TYPE_CHECKING:
     from LightManager import LightManager
     from GeometricManager import GeometricManager
+    from core.Player import Player
 logger = setup_logger(__name__, logging.INFO)
 
 @dataclass
