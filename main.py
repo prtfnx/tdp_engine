@@ -12,7 +12,7 @@ import sdl3
 from typing import TYPE_CHECKING
 from ctypes import c_int, c_char_p, c_void_p
 # Core imports
-from core import event_sys, MovementManager
+from core import event_sys, event_player_mode, MovementManager
 from core.Context import Context
 from core.Actions import Actions
 from core.actions_protocol import Position
@@ -31,6 +31,8 @@ if settings.GUI_ENABLED:
 # Storage imports
 from storage.StorageManager import StorageManager
 from storage.AssetManager import ClientAssetManager
+# Game imports
+from core.Player import Player
 
 if TYPE_CHECKING:
     SDL_Renderer = c_void_p
@@ -103,6 +105,7 @@ def SDL_AppInit_func() -> Context:
     game_context = Context(renderer, window, base_width=BASE_WIDTH, base_height=BASE_HEIGHT)
     game_context.gl_context = gl_context
     game_context.is_gm = False
+    game_context.player = Player("John1")
     logger.info("Context initialized.")    
     # Initialize LayoutManager 
     try:
@@ -190,6 +193,12 @@ def SDL_AppInit_func() -> Context:
         result4=game_context.Actions.create_sprite( test_table.table_id, "sprite_test", Position(200, 200), image_path="resources/test.gif", scale_x=0.5, scale_y=0.5)
         result5=game_context.Actions.create_sprite( test_table.table_id, "sprite_wall", Position(300, 300), image_path="resources/wall1.png", scale_x=0.1, scale_y=0.1, collidable=True, layer='obstacles')
         logger.info(f"Created sprites: {result1}, {result2}, {result3}, {result4}, {result5}")
+        # add player
+        result6=game_context.Actions.create_sprite(test_table.table_id, "sprite_player", Position(0, 0), image_path="resources/player1.png", scale_x=0.1, scale_y=0.1, collidable=True )
+        if result6.success and result6.data:
+            game_context.player.sprite = result6.data['sprite']
+            game_context.player.sprite.coord_x = game_context.player.coord_x
+            game_context.player.sprite.coord_y = game_context.player.coord_y
     # Initialize RenderManager
     try:
         logger.info("Initializing RenderManager...")
@@ -264,26 +273,31 @@ def main():
         sdl3.SDL_Quit()
         sys.exit(1)       
     running = True
-    event = sdl3.SDL_Event()    
+    event = sdl3.SDL_Event() 
+    
     while running:
         # Handle events
-        while sdl3.SDL_PollEvent(event):
-            # Let ImGui process events first and check if it consumed them
-            gui_consumed = False
-            if context.gui and context.imgui:
-                gui_consumed = context.imgui.process_event(event)            
-            # Only process game events if ImGui didn't consume them
-            if context.gui:
-                if not gui_consumed:
-                # Handle paint events
+        while sdl3.SDL_PollEvent(event):          
+            if context.is_gm:
+                # Let ImGui process events first and check if it consumed them
+                gui_consumed = False
+                if context.gui and context.imgui:
+                    gui_consumed = context.imgui.process_event(event)            
+                # Only process game events if ImGui didn't consume them
+                if context.gui:
+                    if not gui_consumed:
+                    # Handle paint events
+                        if PaintManager.handle_paint_events(event):
+                            continue  
+                    # Handle normal game events
+                        running = event_sys.handle_event(context, event)
+                else:
                     if PaintManager.handle_paint_events(event):
-                        continue  
-                # Handle normal game events
+                            continue 
                     running = event_sys.handle_event(context, event)
-            else:
-                if PaintManager.handle_paint_events(event):
-                        continue 
-                running = event_sys.handle_event(context, event)
+            else:                
+                context.current_table.selected_sprite = context.player.sprite
+                running = event_player_mode.handle_event(context, event)
         # Render SDL content first (SDL handles its own clearing)
         SDL_AppIterate(context)       
         # Then render ImGui over the SDL content
@@ -291,7 +305,7 @@ def main():
         if context.gui and context.imgui:
             context.imgui.iterate()        
         # Final buffer swap to display both SDL and ImGui content
-        sdl3.SDL_GL_SwapWindow(context.window)
+        sdl3.SDL_GL_SwapWindow(context.window)        
     # Cleanup
     sdl3.SDL_DestroyRenderer(context.renderer)
     sdl3.SDL_DestroyWindow(context.window)
