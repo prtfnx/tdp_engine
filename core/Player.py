@@ -80,14 +80,19 @@ class Player():
             self.speed_x = 0
         if not hasattr(self, 'speed_y'):
             self.speed_y = 0
-        self.coord_x.value += self.speed_x * dt
-        self.coord_y.value += self.speed_y * dt
+        motion_x= self.speed_x * dt
+        motion_y= self.speed_y * dt
+        self.coord_x.value += motion_x
+        self.coord_y.value += motion_y
+        
 
     def physics_step(self, dt: float, friction: float=1.0):
         """Update acceleration, speed and position for a physics step."""
         self.update_acceleration(dt, friction)
         self.update_speed(dt)
         self.update_position(dt)
+        
+
     
     def set_weapon_direction(self, mouse_x: float, mouse_y: float):
         """Set weapon direction based on mouse position."""
