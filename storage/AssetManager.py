@@ -570,7 +570,7 @@ class ClientAssetManager:
         logger.info(f"Loading asset from managed storage: {file_path}")                      
         filename = Path(file_path).name
         subdir = Path(file_path).parent.name if Path(file_path).parent.name != "." else ""
-        
+        logger.debug(f"Using subdir: {subdir} for asset {filename}")
         operation_id = self.StorageManager.load_file_async(filename, subdir=subdir, as_json=False, to_server=to_server)
         self.dict_of_sprites[operation_id] = sprite
         logger.debug(f"Loading asset from storage with operation ID {operation_id} and filename {filename}")
@@ -645,15 +645,37 @@ class ClientAssetManager:
         logger.debug(f"Cleaned up tracking for operation {operation_id}")
 
     def _is_external_file(self, file_path: str) -> bool:
-        """Check if a file path is external to the StorageManager's root"""
+        """Check if a file path is external to the StorageManager's root, or if a filename/relative path exists in storage."""
         if not self.StorageManager:
             return True  # If no StorageManager, consider all files external
-        
+
         try:
-            file_path_obj = Path(file_path).resolve()
+            logger.debug(f"Checking if file {file_path} is external")
             storage_root = self.StorageManager.root_path.resolve()
-            
-            # Check if file_path is under storage_root
+            file_path_obj = Path(file_path)
+
+            # If only a filename is provided (no path), check in storage root
+            if file_path_obj.name == file_path and not file_path_obj.parent.name:
+                candidate = storage_root / file_path_obj.name
+                if candidate.exists():
+                    logger.debug(f"File {file_path} found in storage root: {candidate}")
+                    return False  # File is internal
+                else:
+                    logger.debug(f"File {file_path} not found in storage root: {candidate}")
+                    return True  # File is external
+
+            # If relative path, check if it exists under storage root
+            candidate = (storage_root / file_path_obj).resolve()
+            try:
+                # Only treat as internal if candidate is inside storage_root
+                if str(candidate).startswith(str(storage_root)) and candidate.exists():
+                    logger.debug(f"File {file_path} found in storage: {candidate}")
+                    return False  # File is internal
+            except Exception as e:
+                logger.error(f"Error checking candidate path: {candidate}: {e}")
+
+            # Otherwise, check if file_path is under storage_root (absolute path)
+            file_path_obj = file_path_obj.resolve()
             return not str(file_path_obj).startswith(str(storage_root))
         except Exception as e:
             logger.error(f"Error checking if file is external: {e}")
