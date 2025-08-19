@@ -327,15 +327,11 @@ class Actions(ActionsProtocol):
     def load_table(self, path_to_table: str) -> ActionResult:
         """Load a table from a file"""
         try:
-            data = self.AssetManager.StorageManager.load_file_async(path_to_table)
-            if not data:
-                return ActionResult(False, f"Failed to load table from {path_to_table}")
+            operation = self.AssetManager.StorageManager.load_file_async(path_to_table)
+            if not operation:
+                return ActionResult(False, f"Failed to load table from {path_to_table}") 
 
-            table = self._create_table_from_dict(data)
-            if not table:
-                return ActionResult(False, f"Failed to create table from loaded data")
-
-            return ActionResult(True, f"Table loaded successfully from {path_to_table}", {'table': table})
+            return ActionResult(True, f"Table loaded successfully from {path_to_table}", {'operation': operation})
         except Exception as e:
             logger.error(f"Failed to load table from {path_to_table}: {e}")
             return ActionResult(False, f"Failed to load table: {str(e)}")

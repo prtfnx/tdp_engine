@@ -369,9 +369,35 @@ class Context:
             layers_data = dict_data.get('layers', {})
             for layer, sprites_data in layers_data.items():
                 if layer in table.layers:  # Only add to valid layers
-                    for sprite_data in sprites_data.values():      
-                        try:
-                                   
+                    print(f"Adding sprites to layer: {layer}")
+                    print(f"sprite data {sprites_data}")
+                    if not isinstance(sprites_data, list):  # unpack list TODO - change                        
+                        for sprite_data in sprites_data.values():
+                            try:                                    
+                                sprite_action = self.Actions.create_sprite(
+                                    to_server = dict_data.get('to_server', False),
+                                    image_path=sprite_data.get('texture_path', ''),
+                                    scale_x=sprite_data.get('scale_x', 1.0),
+                                    scale_y=sprite_data.get('scale_y', 1.0),
+                                    layer=layer,
+                                    character=sprite_data.get('character'),
+                                    moving=sprite_data.get('moving', False),
+                                    speed=sprite_data.get('speed'),
+                                    collidable=sprite_data.get('collidable', False),
+                                    table_id=table.table_id,
+                                    position=sprite_data.get('position', None),
+                                    sprite_id=sprite_data.get('sprite_id', None),                                
+                                )
+                                logger.debug(f"Result of creating sprite: {sprite_action}")
+                                if not sprite_action.success:
+                                    logger.warning(f"Failed to create sprite from {sprite_data.get('texture_path')}")
+                                    
+                            except Exception as e:
+                                logger.error(f"Error creating sprite: {e}")
+                                continue
+                    else:
+                        sprite_data = sprites_data[0]
+                        try:                                    
                             sprite_action = self.Actions.create_sprite(
                                 to_server = dict_data.get('to_server', False),
                                 image_path=sprite_data.get('texture_path', ''),
@@ -393,7 +419,6 @@ class Context:
                         except Exception as e:
                             logger.error(f"Error creating sprite: {e}")
                             continue
-            
             logger.info(f"Successfully created table '{table.name}' from dict")
             return table
             
