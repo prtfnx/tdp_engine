@@ -2,13 +2,13 @@ import uuid
 import sdl3
 import ctypes
 import json
-
 import math
-import clipboard_sys  # Add clipboard import
-import dragdrop_sys   # Add drag drop import
+import core.clipboard_sys as clipboard_sys
+import core.dragdrop_sys as dragdrop_sys
+import render.PaintManager as PaintManager
 from core.MovementManager import sync_sprite_move
-import render.PaintManager
 from tools.logger import setup_logger
+from core.actions_protocol import Position
 logger = setup_logger(__name__)
 
 class Directions:
@@ -538,6 +538,7 @@ def handle_mouse_button_down(cnt, event):
     
     elif event.button.button == 3:  # Right mouse button
         # Handle right-click for context menu
+        import gui.context_menu as context_menu
         point = sdl3.SDL_FPoint()
         point.x, point.y = event.button.x, event.button.y
         # Check if we right-clicked on a sprite (only on the selected layer)
@@ -555,7 +556,7 @@ def handle_mouse_button_down(cnt, event):
         # Show context menu if we have a sprite and context menu system
         if clicked_sprite:
             try:
-                import context_menu
+                
                 context_menu.show_sprite_context_menu(
                     clicked_sprite, 
                     cnt.current_table, 
@@ -670,8 +671,7 @@ def handle_key_event(cnt, key_code):
             pass
         case sdl3.SDL_SCANCODE_Q:
             return sdl3.SDL_APP_SUCCESS
-        case sdl3.SDL_SCANCODE_P:  # Paint mode toggle
-            PaintManager.toggle_paint_mode()
+        case sdl3.SDL_SCANCODE_P:  # Paint mode toggle            
             logger.info("Toggled paint mode")
         case sdl3.SDL_SCANCODE_V:  # Paste
             logger.info("V key pressed - attempting clipboard paste")
@@ -708,16 +708,7 @@ def handle_key_event(cnt, key_code):
                 else:
                     logger.info("Failed to copy sprite for cutting")
             except Exception as e:
-                logger.error(f"Error during sprite cut: {e}")
-        case sdl3.SDL_SCANCODE_TAB:  # Cycle paint colors when in paint mode
-            if PaintManager.is_paint_mode_active():
-                PaintManager.paint_system.cycle_paint_colors()
-        case sdl3.SDL_SCANCODE_EQUALS:  # Increase brush width
-            if PaintManager.is_paint_mode_active():
-                PaintManager.paint_system.adjust_paint_width(1)        
-        case sdl3.SDL_SCANCODE_MINUS:  # Decrease brush width
-            if PaintManager.is_paint_mode_active():
-                PaintManager.paint_system.adjust_paint_width(-1)
+                logger.error(f"Error during sprite cut: {e}")     
         case sdl3.SDL_SCANCODE_R:
             # Start rotation mode for selected sprite
             if cnt.current_table and cnt.current_table.selected_sprite:
@@ -782,7 +773,7 @@ def handle_key_event(cnt, key_code):
                 # Call spell attack with table coordinates
                 table.selected_sprite.character.spell_attack(target_table_x, target_table_y, spell)
                 
-                from core_table.actions_protocol import Position
+                
                 spell_position = Position(table.selected_sprite.coord_x.value, table.selected_sprite.coord_y.value)
                 table_id = table.table_id if hasattr(table, 'table_id') else table.name
                 spell_sprite_path = spell.sprite if hasattr(spell, 'sprite') else spell.image_path

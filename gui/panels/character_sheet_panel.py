@@ -8,12 +8,10 @@ from imgui_bundle import imgui
 import math
 import random
 from typing import Dict, List, Optional, Tuple
-from core_table.compendiums.characters.character import (
-    Character, AbilityScore, Skill, Race, CharacterClass, Background, Feat,
-    AbilityScoreIncrease, Size
-)
+from core.Character import Character
+from core.character_prot import AbilityScore
 from gui.windows.character_sheet_window import CharacterSheetWindow
-from logger import setup_logger
+from tools.logger import setup_logger
 logger = setup_logger(__name__)
 
 
@@ -843,7 +841,7 @@ class CharacterSheetPanel:
                     self.character.level = int(level_match.group())
             
             # Update ability scores using the enum
-            from core_table.compendiums.characters.character import AbilityScore
+            
             ability_map = {
                 "STR": AbilityScore.STRENGTH,
                 "DEX": AbilityScore.DEXTERITY,

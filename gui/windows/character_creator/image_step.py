@@ -10,7 +10,7 @@ from imgui_bundle import imgui, portable_file_dialogs
 from typing import Dict, List, Optional, Any
 from pathlib import Path
 
-from logger import setup_logger
+from tools.logger import setup_logger
 logger = setup_logger(__name__)
 
 

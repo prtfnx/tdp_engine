@@ -1,5 +1,5 @@
 from typing import Dict, Any, List, Optional, TYPE_CHECKING
-from actions_protocol import ActionsProtocol, ActionResult, Position, LAYERS
+from core.actions_protocol import ActionsProtocol, ActionResult, Position, LAYERS
 import uuid
 import copy
 import os

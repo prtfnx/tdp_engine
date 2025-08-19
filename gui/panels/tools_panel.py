@@ -5,7 +5,8 @@ Tools Panel - Left sidebar panel for DM tools and actions
 from imgui_bundle import imgui
 
 import random
-from logger import setup_logger
+import render.PaintManager as PaintManager
+from tools.logger import setup_logger
 logger = setup_logger(__name__)
 
 
@@ -457,7 +458,7 @@ class ToolsPanel:
     def _is_paint_mode_active(self) -> bool:
         """Check if paint mode is active"""
         try:
-            import PaintManager
+            
             return PaintManager.is_paint_mode_active()
         except ImportError:
             return False
@@ -465,7 +466,7 @@ class ToolsPanel:
     def _enter_paint_mode(self):
         """Enter paint mode"""
         try:
-            import PaintManager
+            
             PaintManager.toggle_paint_mode()
             logger.info("Entered paint mode")
         except ImportError:
@@ -474,7 +475,7 @@ class ToolsPanel:
     def _exit_paint_mode(self):
         """Exit paint mode"""
         try:
-            import PaintManager
+            
             PaintManager.toggle_paint_mode()
             logger.info("Exited paint mode")
         except ImportError:
@@ -483,7 +484,7 @@ class ToolsPanel:
     def _cycle_paint_color(self):
         """Cycle paint colors"""
         try:
-            import PaintManager
+            
             PaintManager.cycle_paint_colors()
             logger.info("Cycled paint color")
         except ImportError:
@@ -492,7 +493,7 @@ class ToolsPanel:
     def _adjust_paint_width(self, delta: int):
         """Adjust paint brush width"""
         try:
-            import PaintManager
+            
             PaintManager.adjust_paint_width(delta)
             logger.info(f"Adjusted paint width by {delta}")
         except ImportError:
@@ -500,8 +501,7 @@ class ToolsPanel:
     
     def _clear_paint_canvas(self):
         """Clear paint canvas"""
-        try:
-            import PaintManager
+        try:            
             if PaintManager.paint_system and PaintManager.paint_system.canvas:
                 PaintManager.paint_system.canvas.clear_canvas()
                 logger.info("Cleared paint canvas")
@@ -511,7 +511,7 @@ class ToolsPanel:
     def _set_drawing_settings(self):
         """Apply current drawing settings to the paint system"""
         try:
-            import PaintManager
+            
             # Set color (convert from float to int)
             r = int(self.draw_color[0] * 255)
             g = int(self.draw_color[1] * 255)

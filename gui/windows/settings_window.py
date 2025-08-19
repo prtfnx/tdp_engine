@@ -7,9 +7,9 @@ import os
 import json
 import importlib
 from typing import Dict, Any, List
-from logger import setup_logger
+from tools.logger import setup_logger
 from imgui_bundle import imgui
-import settings
+import tools.settings as settings
 logger = setup_logger(__name__)
 
 class SettingsWindow:

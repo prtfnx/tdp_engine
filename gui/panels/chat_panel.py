@@ -5,7 +5,7 @@ Chat Panel - Bottom panel for chat functionality
 from imgui_bundle import imgui
 
 
-from logger import setup_logger
+from tools.logger import setup_logger
 logger = setup_logger(__name__)
 
 

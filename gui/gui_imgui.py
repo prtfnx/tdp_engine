@@ -11,11 +11,11 @@ import sdl3
 import os
 import platform
 import time
-import context_menu
+import gui.context_menu as context_menu
 from typing import Dict
 from dataclasses import dataclass
 from enum import Enum
-
+import OpenGL.GL as gl
 # Import panel classes
 from .panels import (
     ToolsPanel,

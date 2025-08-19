@@ -8,7 +8,7 @@ from typing import Dict, List, Optional, Any
 from .enums import AbilityGenMethod
 from .utils import CharacterCreatorUtils
 
-from logger import setup_logger
+from tools.logger import setup_logger
 logger = setup_logger(__name__)
 
 

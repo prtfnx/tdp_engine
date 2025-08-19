@@ -7,9 +7,9 @@ from imgui_bundle import imgui
 from typing import Dict, List, Optional, Any
 import uuid
 
-from core_table.Character import Character
-from core_table.compendiums.characters.character import Race, CharacterClass, Background, AbilityScore, Size, Skill
-from core_table.actions_protocol import Position
+from core.Character import Character
+from core.character_prot import Race, CharacterClass, Background, AbilityScore, Size, Skill
+from core.actions_protocol import Position
 from .enums import CreationStep, AbilityGenMethod
 from .utils import CharacterCreatorUtils
 from .race_step import RaceStep
@@ -21,7 +21,7 @@ from .equipment_step import EquipmentStep
 from .image_step import ImageStep
 from .overview_step import OverviewStep
 
-from logger import setup_logger
+from tools.logger import setup_logger
 logger = setup_logger(__name__)
 
 

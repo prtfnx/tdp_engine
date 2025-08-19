@@ -6,9 +6,9 @@ Updated to use Actions protocol bridge
 from imgui_bundle import imgui
 
 import os
-from core_table.actions_protocol import Position
+from core.actions_protocol import Position
 
-from logger import setup_logger
+from tools.logger import setup_logger
 logger = setup_logger(__name__)
 
 

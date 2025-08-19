@@ -13,11 +13,9 @@ from imgui_bundle import imgui
 
 
 # Import storage system components
+import tools.settings as settings
 
-from storage.r2_manager import R2AssetManager
-import settings
-
-from logger import setup_logger
+from tools.logger import setup_logger
 logger = setup_logger(__name__)
 
 class StoragePanel:
@@ -26,9 +24,9 @@ class StoragePanel:
     def __init__(self, context, actions_bridge):
         self.context = context
         self.actions_bridge = actions_bridge          
-        # Initialize storage system components        
+        # Initialize storage system components       
         
-        self.r2_manager = R2AssetManager()
+        
         self.R2_ENABLED = settings.R2_ENABLED
         # Panel state
         self.show_storage_window = False

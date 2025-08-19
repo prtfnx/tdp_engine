@@ -6,9 +6,9 @@ from imgui_bundle import imgui
 
 import time
 import psutil
+import logging
 
-
-from logger import setup_logger
+from tools.logger import setup_logger
 logger = setup_logger(__name__)
 
 
@@ -117,13 +117,13 @@ class DebugPanel:
         """Render logging controls section"""
         if imgui.collapsing_header("Logging"):
             # Log level controls
-            current_level = logging.getLogger().getEffectiveLevel()
+            current_level = logger.getEffectiveLevel()
             level_names = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
             level_values = [logging.DEBUG, logging.INFO, logging.WARNING, logging.ERROR, logging.CRITICAL]
             
             for i, (name, value) in enumerate(zip(level_names, level_values)):
                 if imgui.radio_button(name, current_level == value):
-                    logging.getLogger().setLevel(value)
+                    logger.setLevel(value)
                     logger.info(f"Log level changed to {name}")
                 
                 if i < len(level_names) - 1:

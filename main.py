@@ -93,7 +93,8 @@ def SDL_AppInit_func() -> Context:
         sys.exit(1)
     
     game_context = Context(renderer, window, base_width=BASE_WIDTH, base_height=BASE_HEIGHT)
-    game_context.gl_context = gl_context 
+    game_context.gl_context = gl_context
+    game_context.is_gm = True
     logger.info("Context initialized.")    
     # Initialize LayoutManager 
     try:

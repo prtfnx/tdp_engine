@@ -15,7 +15,7 @@ import shutil
 import sdl3
 from core.Sprite import Sprite
 from storage.StorageManager import StorageManager
-#from net.DownloadManager import DownloadManager  
+from net.DownloadManager import DownloadManager  
 
 logger = setup_logger(__name__)
 
@@ -42,8 +42,8 @@ class ClientAssetManager:
         try:
             download_dir = self.cache_dir / "downloads"
             download_dir.mkdir(exist_ok=True)
-            #self.DownloadManager = DownloadManager(str(download_dir))
-            logger.info(f"DownloadManager  temporary disabled: {download_dir}")
+            self.DownloadManager = DownloadManager(str(download_dir))
+            logger.info(f"DownloadManager initialized with directory: {download_dir}")
         except Exception as e:
             logger.error(f"Failed to initialize DownloadManager: {e}")
             self.DownloadManager = None

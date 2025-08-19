@@ -7,9 +7,9 @@ import re
 from pathlib import Path
 from imgui_bundle import imgui
 from typing import Dict, Optional
-from logger import setup_logger
+from tools.logger import setup_logger
 logger = setup_logger(__name__)
-from core_table.compendiums.characters.character import Character, AbilityScore
+#from core_table.compendiums.characters.character import Character, AbilityScore
 
 class CharacterSheetWindow:
     def __init__(self, context=None, actions_bridge=None):

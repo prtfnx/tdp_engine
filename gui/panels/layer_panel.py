@@ -4,7 +4,7 @@ Layer Panel - Bottom left panel for layer management
 
 from imgui_bundle import imgui
 
-from logger import setup_logger
+from tools.logger import setup_logger
 logger = setup_logger(__name__)
 
 
