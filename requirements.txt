@@ -8,3 +8,5 @@ numpy>=1.24.0
 xxhash >=3.4.0
 #utils
 psutil > 5.8.0
+# Install and deploy
+pyinstaller >=4.0
