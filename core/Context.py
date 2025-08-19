@@ -13,12 +13,14 @@ from tools.logger import setup_logger
 
 # SDL3 type hints using actual SDL3 types
 if TYPE_CHECKING:
+    from core.Player import Player
     from render.LightManager import LightManager
     from render.LayoutManager import LayoutManager
     from gui.gui_imgui import SimplifiedGui
     SDL_Renderer = c_void_p
     SDL_Window = c_void_p 
     SDL_GLContext = c_void_p
+    
 else:
     # At runtime, SDL3 objects are what they are - use Any for typing
     SDL_Renderer = Any
@@ -43,6 +45,10 @@ class Context:
                  base_width: int, 
                  base_height: int) -> None:
         
+        # Player mode
+        self.is_gm: bool = False
+        self.player: Optional[Player] = None
+        # Sprite management
         self.step: c_float = c_float(1)
         self.sprites_list: List[Sprite] = []
         # Graphics context
