@@ -454,7 +454,7 @@ class TablePanel:
                 self._selected_files = self._file_dialog.result()  # This is a list of selected file paths
                 if self._selected_files:
                     self._selected_file = self._selected_files[0]  # Use the first selected file
-                    print(self._selected_file)
+                    self.actions_bridge.load_table(self._selected_file)
                     self.show_load_dialog = False
                     self._file_dialog = None
 
