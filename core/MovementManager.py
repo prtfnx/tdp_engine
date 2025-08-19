@@ -138,9 +138,12 @@ def move_sprites(cnt, delta_time):
     """Move all sprites, handle collisions and dying sprites."""
     width = cnt.window_width
     height = cnt.window_height   
-  
-     
-    for layer, sprite_list in cnt.current_table.dict_of_sprites_list.items():                 
+    # Player managment
+    friction = 0.0 # TODO: implement friction
+    cnt.player.physics_step(delta_time, friction)
+    #print(f'Player position: {cnt.player.position}, player speed: {[cnt.player.speed_x, cnt.player.speed_y]}, '
+          #f'player acceleration: {[cnt.player.acceleration_x, cnt.player.acceleration_y]}')
+    for layer, sprite_list in cnt.current_table.dict_of_sprites_list.items():
         for sprite in sprite_list:
             # Movement
             if sprite.moving:
