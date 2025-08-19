@@ -472,7 +472,7 @@ class Actions(ActionsProtocol):
     # SPRITE MANAGEMENT (CRUD OPERATIONS)
     # ============================================================================
     def create_sprite(self, table_id: str, sprite_id: str, position: Position , 
-                     image_path: str, layer: str = "tokens", to_server: bool = True, **kwargs) -> ActionResult:
+                     image_path: str, layer: str = "tokens", to_server: bool = False, **kwargs) -> ActionResult:
         """Create a new sprite on a table"""
         #TODO refactor to use sprite data dict
         if not isinstance(position, Position):
