@@ -4,6 +4,7 @@ Thread pool-based file operations that don't block the main thread.
 """
 import json
 import queue
+from re import S
 import uuid
 from pathlib import Path
 from typing import Optional, List, Dict, Any, Union, Callable
@@ -32,7 +33,6 @@ class StorageManager:
             try:
                 file_path = self.root_path / subdir / filename
                 file_path.parent.mkdir(parents=True, exist_ok=True)
-                
                 if isinstance(data, dict):
                     with open(file_path, 'w', encoding='utf-8') as f:
                         json.dump(data, f, indent=2)
@@ -125,8 +125,8 @@ class StorageManager:
         operation_id = str(uuid.uuid4())[:8]
         logger.debug(f"Loading file {filename} from {subdir} with as_json={as_json}")
         def _load():
-            try:               
-                file_path = self.root_path / subdir / filename                
+            try:
+                file_path = self.root_path / subdir / filename
                 if as_json or filename.endswith('.json'):
                     with open(file_path, 'r', encoding='utf-8') as f:
                         data = json.load(f)
