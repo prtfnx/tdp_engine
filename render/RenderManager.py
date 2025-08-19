@@ -455,6 +455,14 @@ class RenderManager():
      
         # Update current viewport 
         table_x, table_y, table_width, table_height = table.screen_area
+        
+        #center on player
+        if not context.is_gm:
+            table.viewport_x = table.selected_sprite.coord_x.value + (table.selected_sprite.frect.w / 2) - (table_width / 2)
+            table.viewport_y = table.selected_sprite.coord_y.value + (table.selected_sprite.frect.h / 2) - (table_height / 2)
+
+        #table_x, table_y = table.selected_sprite.frect.x, table.selected_sprite.frect.y
+        #table_width, table_height = 500, 500
         #sdl3.SDL_RenderSetViewport(renderer, ctypes.byref(sdl3.SDL_Rect(table_x, table_y, table_width, table_height)))
         # Clear screen
         sdl3.SDL_SetRenderDrawColorFloat(renderer, ctypes.c_float(0.1), ctypes.c_float(0.1), 
