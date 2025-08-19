@@ -41,7 +41,7 @@ if TYPE_CHECKING:
        
 
 logger = setup_logger(__name__)
-
+PLAYER_MODE: bool = False
 BASE_WIDTH: int = 1920
 BASE_HEIGHT:  int = 1080
 TITLE: c_char_p = c_char_p(b"TDP Engine")
@@ -104,7 +104,7 @@ def SDL_AppInit_func() -> Context:
     
     game_context = Context(renderer, window, base_width=BASE_WIDTH, base_height=BASE_HEIGHT)
     game_context.gl_context = gl_context
-    game_context.is_gm = False
+    game_context.is_gm = not(PLAYER_MODE)
     game_context.player = Player("John1")
     logger.info("Context initialized.")    
     # Initialize LayoutManager 
@@ -187,14 +187,14 @@ def SDL_AppInit_func() -> Context:
     # Initialize Table
     test_table = game_context.add_table("test_table", BASE_WIDTH, BASE_HEIGHT)  
     if test_table:           
-        result1=game_context.Actions.create_sprite( test_table.table_id, "sprite_map", Position(0, 0), image_path="resources/map.jpg", scale_x=0.5, scale_y=0.5, layer='map')
-        result2=game_context.Actions.create_sprite( test_table.table_id, "sprite_woman", Position(0, 0), image_path="resources/woman.png", scale_x=0.5, scale_y=0.5,)
-        result3=game_context.Actions.create_sprite( test_table.table_id, "sprite_token1", Position(100, 100), image_path="resources/token_1.png", scale_x=0.5, scale_y=0.5, collidable=True)
-        result4=game_context.Actions.create_sprite( test_table.table_id, "sprite_test", Position(200, 200), image_path="resources/test.gif", scale_x=0.5, scale_y=0.5)
-        result5=game_context.Actions.create_sprite( test_table.table_id, "sprite_wall", Position(300, 300), image_path="resources/wall1.png", scale_x=0.1, scale_y=0.1, collidable=True, layer='obstacles')
+        result1=game_context.Actions.create_sprite( test_table.table_id, "sprite_map", Position(0, 0), image_path="map.jpg", scale_x=0.5, scale_y=0.5, layer='map')
+        result2=game_context.Actions.create_sprite( test_table.table_id, "sprite_woman", Position(0, 0), image_path="woman.png", scale_x=0.5, scale_y=0.5,)
+        result3=game_context.Actions.create_sprite( test_table.table_id, "sprite_token1", Position(100, 100), image_path="token_1.png", scale_x=0.5, scale_y=0.5, collidable=True)
+        result4=game_context.Actions.create_sprite( test_table.table_id, "sprite_test", Position(200, 200), image_path="test.gif", scale_x=0.5, scale_y=0.5)
+        result5=game_context.Actions.create_sprite( test_table.table_id, "sprite_wall", Position(300, 300), image_path="wall1.png", scale_x=0.1, scale_y=0.1, collidable=True, layer='obstacles')
         logger.info(f"Created sprites: {result1}, {result2}, {result3}, {result4}, {result5}")
         # add player
-        result6=game_context.Actions.create_sprite(test_table.table_id, "sprite_player", Position(0, 0), image_path="resources/player1.png", scale_x=0.1, scale_y=0.1, collidable=True )
+        result6=game_context.Actions.create_sprite(test_table.table_id, "sprite_player", Position(0, 0), image_path="player1.png", scale_x=0.1, scale_y=0.1, collidable=True )
         if result6.success and result6.data:
             game_context.player.sprite = result6.data['sprite']
             game_context.player.sprite.coord_x = game_context.player.coord_x
