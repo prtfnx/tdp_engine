@@ -10,7 +10,8 @@ from pathlib import Path
 # PATH SETTINGS
 # ============================================================================
 # Get the directory containing this file (project root)
-BASE_DIR = Path(__file__).resolve().parent
+BASE_DIR = Path(__file__).resolve().parent.parent
+print(f"Base directory: {BASE_DIR}")
 PROJECT_ROOT = str(BASE_DIR)
 
 # Load environment variables from .env file
@@ -33,9 +34,11 @@ DEBUG_MODE = True
 # STORAGE SETTINGS
 # ============================================================================
 # Default storage root path (platform-specific)
-_default_storage_path = os.path.join(os.path.expanduser("~"), "Documents", "TTRPG_Storage") if os.name == 'nt' else os.path.join(os.path.expanduser("~"), ".local", "share", "ttrpg")
-DEFAULT_STORAGE_PATH = os.getenv('DEFAULT_STORAGE_PATH', _default_storage_path)
-
+#_default_storage_path = os.path.join(os.path.expanduser("~"), "Documents", "TTRPG_Storage") if os.name == 'nt' else os.path.join(os.path.expanduser("~"), ".local", "share", "ttrpg")
+#DEFAULT_STORAGE_PATH = os.getenv('DEFAULT_STORAGE_PATH', _default_storage_path)
+# for no lets it be root
+DEFAULT_STORAGE_PATH = os.path.join(PROJECT_ROOT, "resources")
+print(f"Default storage path: {DEFAULT_STORAGE_PATH}")
 # Storage folders
 IMAGES_FOLDER = "images"
 MUSIC_FOLDER = "music"
