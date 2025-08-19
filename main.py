@@ -94,7 +94,7 @@ def SDL_AppInit_func() -> Context:
     
     game_context = Context(renderer, window, base_width=BASE_WIDTH, base_height=BASE_HEIGHT)
     game_context.gl_context = gl_context
-    game_context.is_gm = True
+    game_context.is_gm = False
     logger.info("Context initialized.")    
     # Initialize LayoutManager 
     try:
@@ -158,7 +158,7 @@ def SDL_AppInit_func() -> Context:
             game_context.LightingManager = LightManager(game_context, name ="default_lighting_manager")
             if game_context.LightingManager: 
                 default_light = Light('default_light')
-                game_context.LightingManager.create_light_texture(default_light, path_to_image=b"res/light.png")
+                game_context.LightingManager.create_light_texture(default_light, path_to_image=b"resources/light.png")
                 game_context.light_on= True
                 logger.info("Lighting system initialized.")
             else:
