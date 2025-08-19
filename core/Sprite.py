@@ -200,7 +200,7 @@ class Sprite:
         """Convert sprite to dictionary representation"""
         return {
             'sprite_id': self.sprite_id,
-            'texture_path': self.texture_path,
+            'texture_path': self.texture_path.decode('utf-8'),
             'coord_x': self.coord_x.value,
             'coord_y': self.coord_y.value,
             'scale_x': self.scale_x,
