@@ -4,6 +4,7 @@ Rewritten from scratch using ImGui best practices
 """
 
 from imgui_bundle import imgui
+from imgui_bundle import portable_file_dialogs as pfd
 from tools.logger import setup_logger
 logger = setup_logger(__name__)
 
@@ -53,8 +54,10 @@ class TablePanel:
         self._cached_connection_status = None
         self._last_table_list_size = 0
         self._tab_ids_cache = {}  # Cache tab IDs to avoid string creation
-        self._connection_cache_frame = 0  # Frame counter for connection cache
-
+        self._connection_cache_frame = 0  # Frame counter for connection cache        
+        self._selected_files = None
+        self._file_dialog = None
+    
     def render(self):
         """Render the table panel content with clean layout"""
         try:
@@ -441,40 +444,20 @@ class TablePanel:
 
     def _render_load_dialog(self):
         """Render load file dialog"""
+        
         if self.show_load_dialog:
-            imgui.open_popup("Load Table")
-        
-        # Center the popup
-        viewport = imgui.get_main_viewport()
-        center_x = viewport.work_pos.x + viewport.work_size.x * 0.5
-        center_y = viewport.work_pos.y + viewport.work_size.y * 0.5
-        imgui.set_next_window_pos((center_x, center_y), imgui.Cond_.appearing.value, (0.5, 0.5))
-        
-        if imgui.begin_popup_modal("Load Table", None, imgui.WindowFlags_.always_auto_resize.value)[0]:
-            try:
-                imgui.text("Load saved table and session")
-                imgui.separator()
-                
-                # TODO: Add file browser or list of saved files
-                imgui.text("Available saved tables:")
-                imgui.text("(File browser not implemented yet)")
-                
-                imgui.separator()
-                
-                # Action buttons
-                if imgui.button("Load", (80, 30)):
-                    self._handle_load_table()
-                    self.show_load_dialog = False
-                    imgui.close_current_popup()
-                
-                imgui.same_line()
-                if imgui.button("Cancel", (80, 30)):
-                    self.show_load_dialog = False
-                    imgui.close_current_popup()
+            if self._file_dialog is None:
+                self._file_dialog = pfd.open_file("Select File")
+                        
                     
-            finally:
-                imgui.end_popup()    # === Event Handlers ===
-    
+            if self._file_dialog is not None and self._file_dialog.ready():
+                self._selected_files = self._file_dialog.result()  # This is a list of selected file paths
+                if self._selected_files:
+                    self._selected_file = self._selected_files[0]  # Use the first selected file
+                    print(self._selected_file)
+                    self.show_load_dialog = False
+                    self._file_dialog = None
+
     def _switch_to_table(self, table):
         """Switch to a different table - only called on user interaction"""
         if table != self.context.current_table:
