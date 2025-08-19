@@ -91,7 +91,34 @@ class GuiActionsBridge:
         else:
             logger.error(f"Failed to delete table: {result.message}")
             return False
-    
+
+    def save_table(self, table_name: str) -> bool:
+        """Save the current table state"""
+        if not self.context.current_table:
+            logger.error("No current table to save")
+            return False
+
+        table_id = self.context.current_table.table_id  # Use table_id instead of name
+        result = self.actions.save_table(table_id, table_name)
+
+        if result.success:
+            logger.info(f"Table saved: {result.message}")
+            return True
+        else:
+            logger.error(f"Failed to save table: {result.message}")
+            return False
+
+    def load_table(self, path_to_table: str) -> bool:
+        """Load a table by path"""
+        
+        result = self.actions.load_table(path_to_table)
+        if result.success:
+            logger.info(f"Table loaded: {result.message}")
+            return True
+        else:
+            logger.error(f"Failed to load table: {result.message}")
+            return False
+
     # Sprite Management
     def get_table_sprites(self, layer: Optional[str] = None) -> Dict[str, Dict[str, Any]]:
         """Get sprites on current table, optionally filtered by layer"""
