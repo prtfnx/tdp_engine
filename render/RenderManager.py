@@ -2,7 +2,6 @@ import sdl3
 import ctypes
 import logging
 import math
-import numpy as np
 from tools.logger import setup_logger
 from typing import Optional, Dict, List, Any, Union, Tuple, TYPE_CHECKING
 from core.Sprite import Sprite
@@ -12,7 +11,7 @@ from functools import lru_cache
 if TYPE_CHECKING:
     from LightManager import LightManager
     from GeometricManager import GeometricManager
-logger = setup_logger(__name__,level=logging.INFO )
+logger = setup_logger(__name__, logging.INFO)
 
 @dataclass
 class LayerSettings:
@@ -475,6 +474,7 @@ class RenderManager():
             # TODO - make table.player a Player object
             #logger.info("Preparing lighting effects")
             table.player =  table.selected_sprite
+            #logger.debug(f"Preparing lighting for player: {getattr(table.player, 'name', None)} at position: {getattr(table.player, 'frect', None)}")
             self.prepare_lighting(table.player)
             # Render all layers with lighting
             selected_layer = context.selected_layer if context else None

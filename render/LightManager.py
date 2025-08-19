@@ -75,7 +75,7 @@ class LightManager:
             raise
     def create_light_texture(self, light, path_to_image=b"resources/light.png",width=1920, height=1080):
         """test purpose: create a texture for a light"""
-        renderer= self.context.renderer
+        renderer = self.context.renderer
         logger.info(f"Creating light texture for {light.name}")
         surface = sdl3.IMG_Load(path_to_image)
         light_texture = sdl3.SDL_CreateTextureFromSurface(renderer, surface)
