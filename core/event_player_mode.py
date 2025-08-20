@@ -52,9 +52,12 @@ def handle_event(cnt, event):
                 if hasattr(event, 'motion'):
                     mouse_x = event.motion.x
                     mouse_y = event.motion.y
+                    # Convert screen coordinates to table coordinates if necessary
+                    table_mouse_x, table_mouse_y = cnt.current_table.screen_to_table(mouse_x, mouse_y)
+                    print(f"Mouse moved to: ({mouse_x}, {mouse_y})")
                     cnt.mouse_pos = (mouse_x, mouse_y)
                     if hasattr(cnt.player, 'set_weapon_direction'):
-                        cnt.player.set_weapon_direction(mouse_x, mouse_y)  
+                        cnt.player.set_weapon_direction(table_mouse_x, table_mouse_y)  
                 return True
             except Exception as e:
                 logger.error(f"Error handling mouse motion: {e}")
