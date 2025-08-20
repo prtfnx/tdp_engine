@@ -3,6 +3,8 @@ from tools.logger import setup_logger
 from typing import Optional, Union, Dict, Any, TYPE_CHECKING
 import sdl3
 import uuid
+import time
+import json
 
 # Import types for type checking
 if TYPE_CHECKING:     
@@ -34,49 +36,50 @@ class Sprite:
                  asset_id: Optional[str] = None, 
                  context: Optional['Context'] = None) -> None:
         # Initialize all ctypes structures properly
-        self.coord_x: Any = ctypes.c_float(coord_x)  # ctypes.c_float
-        self.coord_y: Any = ctypes.c_float(coord_y)  # ctypes.c_float
-        self.rect: Any = sdl3.SDL_Rect()  # SDL_Rect
-        self.frect: Any = sdl3.SDL_FRect()  # SDL_FRect
-        
+        self.coord_x: ctypes.c_float = ctypes.c_float(coord_x)  
+        self.coord_y: ctypes.c_float = ctypes.c_float(coord_y)  
+        self.rect: sdl3.SDL_Rect = sdl3.SDL_Rect() 
+        self.frect: sdl3.SDL_FRect = sdl3.SDL_FRect()  
+
         # Initialize dimensions to prevent access violations
-        self.original_w = 0.0
-        self.original_h = 0.0
-        
+        self.original_w: float = 0.0
+        self.original_h: float = 0.0
+
         # Store basic properties
-        self.texture_path = texture_path
-        self.renderer = renderer
-        self.scale_x = scale_x
-        self.scale_y = scale_y
+        self.texture_path: Union[str, bytes] = texture_path
+        self.renderer: sdl3.SDL_Renderer = renderer
+        self.scale_x: float = scale_x
+        self.scale_y: float = scale_y
         self.character = character
-        self.moving = moving
-        self.speed = speed
-        self.die_timer = die_timer
-        self.collidable = collidable
-        self.layer = layer
-        self.texture = None
+        self.moving: bool = moving
+        self.speed: Optional[float] = speed
+        self.die_timer: Optional[float] = die_timer
+        self.collidable: bool = collidable
+        self.layer: str = layer
+        self.texture: Optional[sdl3.SDL_Texture] = None
+        self.rotation: float = 0.0
           # Compendium entity support
-        self.compendium_entity = compendium_entity
-        self.entity_type = entity_type
-        self.sprite_id = sprite_id if sprite_id is not None else str(uuid.uuid4())
+        self.compendium_entity: Optional[Any] = compendium_entity
+        self.entity_type: Optional[str] = entity_type
+        self.sprite_id: str = sprite_id if sprite_id is not None else str(uuid.uuid4())
           # R2 Asset support
-        self.asset_id = asset_id
-        self.context = context  # Store context reference for R2 requests
-        
+        self.asset_id: Optional[str] = asset_id
+        self.context: Optional['Context'] = context  # Store context reference for R2 requests
+
         # Add name attribute for identification
         if compendium_entity and hasattr(compendium_entity, 'name'):
-            self.name = compendium_entity.name
+            self.name: Optional[str] = compendium_entity.name
         else:
-            self.name = None
+            self.name: Optional[str] = None
         
         # Initialize movement properties
-        self.dx = 0.0
-        self.dy = 0.0
-        
+        self.dx: float = 0.0
+        self.dy: float = 0.0
+
         # Store previous position for network sync
-        self._last_network_x = coord_x
-        self._last_network_y = coord_y
-        
+        self._last_network_x: float = coord_x
+        self._last_network_y: float = coord_y
+
         # Load texture last, after everything is initialized
         logger.info(f"created sprite {self.sprite_id} at ({coord_x}, {coord_y}) with texture path {texture_path}")
         try:
@@ -214,3 +217,92 @@ class Sprite:
             'entity_type': self.entity_type,
             'asset_id': self.asset_id
         }
+
+class AnimatedSprite(Sprite):
+    """A sprite that supports animation with frames."""
+    
+    def __init__(self, 
+                 renderer: Any,  # SDL_Renderer 
+                 sheet_path: Union[str, bytes], 
+                 frame_rects: list = [],  # List of SDL_Rect or SDL_FRect for each frame
+                 frame_duration: float = 100,  # ms per frame
+                 scale_x: float = 1,
+                 scale_y: float = 1,
+                 atlas_path: str = None,
+                 **kwargs) -> None:
+        super().__init__(renderer, sheet_path, scale_x=scale_x, scale_y=scale_y, **kwargs)
+        self.sheet_path = sheet_path
+        self.frame_rects = frame_rects  # List of rectangles for each frame
+        self.frame_duration = frame_duration
+        self.current_frame = 0
+        self.last_frame_time = int(time.time() * 1000)  # ms
+        self.sheet_texture = None  # Will be loaded externally or via set_texture
+        self.atlas_path = atlas_path
+        if atlas_path:
+            self.init_animation()
+
+
+    def init_animation(self):
+        """Init sprite atlas"""
+        #TODO - integrate with storage manager
+        with open(self.atlas_path, 'r') as f:
+            atlas = json.load(f)
+        frames = atlas['frames']
+        frame_frects = []
+        print(f'Loaded atlas: {self.atlas_path} frames are {frames}')
+        import re
+        def frame_sort_key(key):
+            match = re.search(r'_(\d+)\.png$', key)
+            return int(match.group(1)) if match else 0
+
+        for key in sorted(frames.keys(), key=frame_sort_key):
+            frame = frames[key]['frame']
+            print(f'Loaded frame: {key} - {frame}')
+            frect = sdl3.SDL_FRect()
+            frect.x = frame['x']
+            frect.y = frame['y']
+            frect.w = frame['w']
+            frect.h = frame['h']
+            frame_frects.append(frect)
+        
+        self.frame_frects = frame_frects
+
+    def update_animation(self):
+        """Update the current frame based on elapsed time."""
+        now = int(time.time() * 1000)
+        if now - self.last_frame_time > self.frame_duration:
+           
+            self.current_frame = (self.current_frame + 1) % len(self.frame_frects)
+            self.last_frame_time = now
+
+    def reload_texture(self, texture: Any, w: int, h: int) -> bool:  # texture: SDL_Texture
+        """Reload texture for animated sprite"""     
+        old_texture = self.texture        
+        self.texture = texture
+        if old_texture and self.texture:
+            try:
+                sdl3.SDL_DestroyTexture(old_texture)
+            except Exception as e:
+                logger.error(f"Error destroying old texture: {e}")
+        print(f'Reloading texture for animated sprite: {self.sprite_id}, {self.frame_frects[0].w}, {self.frame_frects[0].h}')
+
+        w = int(self.frame_frects[0].w)
+        h = int(self.frame_frects[0].h)
+        if self.texture:
+            self.rect.w = w
+            self.rect.h = h           
+            self.frect.w = ctypes.c_float(w)
+            self.frect.h = ctypes.c_float(h)
+            self.original_w = float(w)
+            self.original_h = float(h)
+
+        
+
+    def get_current_frame_frect(self):
+        return self.frame_frects[self.current_frame]
+
+    def set_sheet_texture(self, texture):
+        """Set the loaded sprite sheet texture."""
+        self.sheet_texture = texture
+
+   
