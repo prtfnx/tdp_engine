@@ -576,6 +576,83 @@ class Actions(ActionsProtocol):
             })
         except Exception as e:
             return ActionResult(False, f"Failed to create sprite: {str(e)}")
+    
+    def create_animated_sprite(self, table_id: str, sprite_id: str, position: Position , 
+                     image_path: str, atlas_path:str, layer: str = "tokens", to_server: bool = False, **kwargs) -> ActionResult:
+        """Create a new animated sprite on a table"""
+        #TODO refactor to use sprite data dict
+        if not isinstance(position, Position):
+            position = Position(position[0], position[1]) if isinstance(position, (list, tuple)) else Position(0, 0)
+        try:
+            table = self._get_table_by_id(table_id)
+            if not table:
+                return ActionResult(False, f"Table {table_id} not found")
+            if layer not in LAYERS:
+                return ActionResult(False, f"Invalid layer: {layer}")
+            
+            # Create sprite using Context method
+            sprite_data = {
+                'texture_path': image_path,
+                'layer': layer,
+                'table_id': table.table_id,
+                'coord_x': position.x,
+                'coord_y': position.y,
+                'sprite_id': sprite_id,
+                'atlas_path': atlas_path,
+                **kwargs
+            }
+            logger.debug(f"Creating sprite with data: {sprite_data}")
+            sprite = self.context.add_animated_sprite(
+                **sprite_data
+            )
+           
+            
+            # Start io operations to load asset texture
+            if self.AssetManager and sprite:
+                # Check if we already have an asset_id (e.g., from copy/paste)
+                provided_asset_id = kwargs.get('asset_id')
+                if provided_asset_id:
+                    logger.info(f"Using existing asset_id {provided_asset_id} for sprite {sprite_id}")
+                    # Set the asset_id on the sprite before loading
+                    sprite.asset_id = provided_asset_id
+                    # Try to get cached texture directly
+                    texture = self.AssetManager.find_texture_by_asset_id(provided_asset_id)
+                    if texture:
+                        logger.info(f"Found cached texture for asset {provided_asset_id}")                        
+                        sprite.reload_texture(texture, int(sprite.frect.w), int(sprite.frect.h))
+                        logger.debug(f"Sprite frect: {sprite.frect.w}x{sprite.frect.h}")
+                    else:
+                        logger.warning(f"Texture not found for asset {provided_asset_id}, loading from path")
+                        self.AssetManager.load_asset_for_sprite(sprite, image_path, to_server=to_server)
+                else:
+                    logger.info(f"Loading asset for sprite {sprite_id} from {image_path}")    
+                    self.AssetManager.load_asset_for_sprite(sprite, image_path, to_server=to_server)
+            if to_server:
+                logger.debug(f"Creating sprite {sprite_id} on server for table {table_id}")
+                self.context.protocol.sprite_create(table_id=table.table_id,
+                                            sprite_data=sprite.to_dict())
+            if not sprite:
+                return ActionResult(False, f"Failed to create sprite {sprite_id} with path {image_path}")
+            
+            action = {
+                'sprite_id': sprite_id,
+                'type': 'create_sprite',
+                'table_id': table_id,                
+                'position': position,
+                'image_path': image_path,
+                'layer': layer
+            }
+            self._add_to_history(action)
+            
+            return ActionResult(True, f"Sprite {sprite_id} created on layer {layer}", {
+                'sprite_id': sprite_id,
+                'position': position,
+                'image_path': image_path,
+                'layer': layer,
+                'sprite': sprite
+            })
+        except Exception as e:
+            return ActionResult(False, f"Failed to create sprite: {str(e)}")
     def get_sprite_info(self, table_id: str, sprite_id: str) -> ActionResult:
         """Get sprite information"""
         try:
