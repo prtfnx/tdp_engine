@@ -193,8 +193,8 @@ def SDL_AppInit_func() -> Context:
         result4=game_context.Actions.create_sprite( test_table.table_id, "sprite_test", Position(200, 200), image_path="test.gif", scale_x=0.5, scale_y=0.5)
         result5=game_context.Actions.create_sprite( test_table.table_id, "sprite_wall", Position(300, 300), image_path="wall1.png", scale_x=0.1, scale_y=0.1, collidable=True, layer='obstacles')
         logger.info(f"Created sprites: {result1}, {result2}, {result3}, {result4}, {result5}")
-        # add player
-        result6=game_context.Actions.create_sprite(test_table.table_id, "sprite_player", Position(0, 0), image_path="player1.png", scale_x=0.1, scale_y=0.1, collidable=True )
+        # add player        
+        result6=game_context.Actions.create_animated_sprite(test_table.table_id, "sprite_player", Position(0, 0), image_path="soldier/handgun/move.png", atlas_path="resources/soldier/handgun/move.json", scale_x=0.5, scale_y=0.5, collidable=True )
         if result6.success and result6.data:
             game_context.player.sprite = result6.data['sprite']
             game_context.player.sprite.coord_x = game_context.player.coord_x
