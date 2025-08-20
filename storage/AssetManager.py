@@ -569,7 +569,7 @@ class ClientAssetManager:
         # File is already in managed storage, load it
         logger.info(f"Loading asset from managed storage: {file_path}")                      
         filename = Path(file_path).name
-        subdir = Path(file_path).parent.name if Path(file_path).parent.name != "." else ""
+        subdir = Path(file_path).parent.as_posix() if Path(file_path).parent.as_posix() != "." else ""
         logger.debug(f"Using subdir: {subdir} for asset {filename}")
         operation_id = self.StorageManager.load_file_async(filename, subdir=subdir, as_json=False, to_server=to_server)
         self.dict_of_sprites[operation_id] = sprite
