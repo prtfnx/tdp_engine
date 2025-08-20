@@ -5,7 +5,7 @@ import uuid
 from typing import Optional, Dict, List, Any, Union, TYPE_CHECKING
 from core.Actions import Actions
 from core.ContextTable import ContextTable
-from core.Sprite import Sprite  
+from core.Sprite import AnimatedSprite, Sprite  
 from render.RenderManager import RenderManager
 from render.GeometricManager import GeometricManager
 from storage.AssetManager import ClientAssetManager
@@ -223,6 +223,78 @@ class Context:
             logger.error(f"Error creating sprite from {texture_path}: {e}")
             return None
     
+    def add_animated_sprite(self, texture_path, atlas_path, scale_x=1, scale_y=1, layer='tokens',
+                   character=None, moving=False, speed=None,
+                   collidable=False, table=None, coord_x=0.0, coord_y=0.0,sprite_id=None,table_id=None, **kwargs):
+        """Add a sprite to the specified layer in the current table"""
+        #TODO refactor to use sprite data dict to unify sprite creation
+        
+        if not table:
+            if table_id:
+                table_result = self.Actions.get_table(table_id=table_id)
+                if table_result and table_result.success and table_result.data:
+                    table = table_result.data.get("table")
+                else:
+                    logger.error(f"Failed to get table {table_id}: {table_result.message if table_result else 'No result'}")
+                    table = None
+            else:
+                table = None
+        table = table if table else self.current_table
+        
+        # Ensure we have a valid table
+        if not table:
+            logger.error("No valid table available for sprite creation")
+            return None
+        logger.debug(f"Adding, table: {table}, texture_path: {texture_path}, layer: {layer}")
+        # Validate layer exists
+        if layer not in table.dict_of_sprites_list:
+            logger.error(f"Invalid layer: {layer}")
+            return None
+        if  isinstance(texture_path, str):
+            texture_path = texture_path.encode()            
+        logger.debug(f"Adding sprite to layer {layer} with texture {texture_path}")
+        try:
+            # Create sprite with error handling
+            logger.info(f"Creating sprite from {texture_path} in layer {layer}")
+            new_sprite = AnimatedSprite(
+                self.renderer, 
+                texture_path,
+                scale_x=scale_x, 
+                scale_y=scale_y, 
+                character=character,
+                moving=moving, 
+                speed=speed, 
+                collidable=collidable,
+                coord_x=coord_x,
+                coord_y=coord_y,
+                sprite_id=sprite_id,
+                layer=layer,
+                context=self,
+                atlas_path=atlas_path                
+            )
+            
+            # Check if sprite creation was successful
+            if not new_sprite:
+                logger.error(f"Failed to create sprite from {texture_path}")
+                # Clean up any partially created sprite
+                if new_sprite:
+                    try:
+                        new_sprite.cleanup()  
+                    except:
+                        pass
+                return None
+            
+            # Add to table's sprite list
+            table.dict_of_sprites_list[layer].append(new_sprite)
+            
+            # Set as selected sprite if none selected
+            if table.selected_sprite is None:
+                table.selected_sprite = new_sprite             
+            logger.info(f"Successfully added sprite from {texture_path} to layer {layer}")
+            return new_sprite
+        except Exception as e:
+            logger.error(f"Error creating sprite from {texture_path}: {e}")
+            return None
     def find_sprite_by_id(self, sprite_id, table_id=None):
         """Find and return a sprite by its ID from all layers in the table.
         
