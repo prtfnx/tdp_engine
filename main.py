@@ -11,6 +11,7 @@ if sys.stderr is None:
 # System imports
 import sys
 import sdl3
+import random
 from typing import TYPE_CHECKING
 from ctypes import c_int, c_char_p, c_void_p, byref
 # Core imports
@@ -43,7 +44,7 @@ if TYPE_CHECKING:
        
 
 logger = setup_logger(__name__)
-MUSIC: bool = False
+MUSIC: bool = True
 PLAYER_MODE: bool = False
 BASE_WIDTH: int = 1920
 BASE_HEIGHT:  int = 1080
@@ -137,6 +138,9 @@ def SDL_AppInit_func() -> Context:
             music, audio_device = init_audio()
             game_context.audio_device = audio_device
             game_context.music = music
+            sound_folder = "resources/sounds/pistol_shot"
+            mp3_files = [f for f in os.listdir(sound_folder) if f.endswith(".wav")]
+            game_context.GunshotSounds = [sdl3.Mix_LoadWAV(os.path.join(sound_folder, path).encode()) for path in mp3_files]
         except Exception as e:
             logger.error(f"Failed to initialize audio: {e}")    
     # Initialize LayoutManager 
@@ -226,11 +230,11 @@ def SDL_AppInit_func() -> Context:
         result5=game_context.Actions.create_sprite( test_table.table_id, "sprite_wall", Position(300, 300), image_path="wall1.png", scale_x=0.1, scale_y=0.1, collidable=True, layer='obstacles')
         logger.info(f"Created sprites: {result1}, {result2}, {result3}, {result4}, {result5}")
         # add player        
-        result9=game_context.Actions.create_animated_sprite(test_table.table_id, "sprite_foots_run", Position(0, 0), image_path="soldier/foots/run.png", atlas_path="resources/soldier/foots/run.json", scale_x=0.5, scale_y=0.5, collidable=True, visible=False) 
+        result9=game_context.Actions.create_animated_sprite(test_table.table_id, "sprite_foots_run", Position(0, 0), image_path="soldier/foots/run.png", atlas_path="resources/soldier/foots/run.json", scale_x=0.5, scale_y=0.5, collidable=True, visible=False, frame_duration=30)
         result6=game_context.Actions.create_animated_sprite(test_table.table_id, "sprite_player_idle", Position(0, 0), image_path="soldier/handgun/idle.png", atlas_path="resources/soldier/handgun/idle.json", scale_x=0.5, scale_y=0.5, collidable=True )
         result7=game_context.Actions.create_animated_sprite(test_table.table_id, "sprite_player_move", Position(0, 0), image_path="soldier/handgun/move.png", atlas_path="resources/soldier/handgun/move.json", scale_x=0.5, scale_y=0.5, collidable=True, visible=False) 
-        result8=game_context.Actions.create_animated_sprite(test_table.table_id, "sprite_player_shoot", Position(0, 0), image_path="soldier/handgun/shoot.png", atlas_path="resources/soldier/handgun/shoot.json", scale_x=0.5, scale_y=0.5, collidable=True, visible=False) 
-        
+        result8=game_context.Actions.create_animated_sprite(test_table.table_id, "sprite_player_shoot", Position(0, 0), image_path="soldier/handgun/shoot.png", atlas_path="resources/soldier/handgun/shoot.json", scale_x=0.5, scale_y=0.5, collidable=True, visible=False, frame_duration=100)
+
         if result6.success and result6.data:
             game_context.player.sprite = result6.data['sprite']
             game_context.player.sprite.coord_x = game_context.player.coord_x
