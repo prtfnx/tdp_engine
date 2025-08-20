@@ -1,4 +1,6 @@
 # For pyinstaller build and deploy
+from email.mime import audio
+import re
 import sys
 import os
 if sys.stdout is None:
@@ -10,7 +12,7 @@ if sys.stderr is None:
 import sys
 import sdl3
 from typing import TYPE_CHECKING
-from ctypes import c_int, c_char_p, c_void_p
+from ctypes import c_int, c_char_p, c_void_p, byref
 # Core imports
 from core import event_sys, event_player_mode, MovementManager
 from core.Context import Context
@@ -41,6 +43,7 @@ if TYPE_CHECKING:
        
 
 logger = setup_logger(__name__)
+MUSIC: bool = False
 PLAYER_MODE: bool = False
 BASE_WIDTH: int = 1920
 BASE_HEIGHT:  int = 1080
@@ -59,6 +62,9 @@ MARGIN_SIZE: int = 20               # Margin between table and GUI panels
 
 def sdl3_init() -> tuple[sdl3.SDL_Window, sdl3.SDL_Renderer, sdl3.SDL_GLContext]:
        
+    if not sdl3.SDL_Init(sdl3.SDL_INIT_VIDEO | sdl3.SDL_INIT_EVENTS | sdl3.SDL_INIT_AUDIO):
+        logger.error(f"Failed to initialize library: {sdl3.SDL_GetError().decode()}.")
+        sys.exit(1)
     # Create window with OpenGL support
     window = sdl3.SDL_CreateWindow(
         TITLE, c_int(BASE_WIDTH), c_int(BASE_HEIGHT), 
@@ -89,7 +95,24 @@ def sdl3_init() -> tuple[sdl3.SDL_Window, sdl3.SDL_Renderer, sdl3.SDL_GLContext]
         sys.exit(1)    
     return window, renderer, gl_context
 
-    
+def init_audio():
+    """Initialize audio subsystem."""    
+    audioDrivers = [sdl3.SDL_GetAudioDriver(i).decode() for i in range(sdl3.SDL_GetNumAudioDrivers())]
+    logger.debug(f"Available audio drivers: {', '.join(audioDrivers)} (current: {sdl3.SDL_GetCurrentAudioDriver().decode()}).")
+    if currentAudioDevice := sdl3.SDL_OpenAudioDevice(sdl3.SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK, None):
+        sdl3.Mix_Init(sdl3.MIX_INIT_MP3)
+        sdl3.Mix_OpenAudio(currentAudioDevice, byref(audioSpec := sdl3.SDL_AudioSpec()))
+        logger.debug(f"Current audio device: {sdl3.SDL_GetAudioDeviceName(currentAudioDevice).decode()}.")
+        music = sdl3.Mix_LoadMUS(b"resources/music/battle_music.mp3")
+        if not music:
+            logger.error(f"Failed to load music: {sdl3.SDL_GetError().decode()}")
+        else:
+            sdl3.Mix_PlayMusic(music, -1)  # Play indefinitely
+    else:
+        logger.error(f"Failed to open audio device: {sdl3.SDL_GetAudioDeviceName(sdl3.SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK).decode()}, error: {sdl3.SDL_GetError().decode()}.")
+    return music, currentAudioDevice
+  
+
 def SDL_AppInit_func() -> Context:
     """Initialize SDL window, renderer, and network client."""
     
@@ -102,11 +125,20 @@ def SDL_AppInit_func() -> Context:
         sdl3.SDL_Quit()
         sys.exit(1)
     
+
     game_context = Context(renderer, window, base_width=BASE_WIDTH, base_height=BASE_HEIGHT)
     game_context.gl_context = gl_context
     game_context.is_gm = not(PLAYER_MODE)
-    game_context.player = Player("John1")
-    logger.info("Context initialized.")    
+    game_context.player = Player("John1", context=game_context)
+    logger.info("Context initialized.")
+    # Initialise audio
+    if MUSIC:
+        try:
+            music, audio_device = init_audio()
+            game_context.audio_device = audio_device
+            game_context.music = music
+        except Exception as e:
+            logger.error(f"Failed to initialize audio: {e}")    
     # Initialize LayoutManager 
     try:
         logger.info("Initializing LayoutManager...")
@@ -194,11 +226,25 @@ def SDL_AppInit_func() -> Context:
         result5=game_context.Actions.create_sprite( test_table.table_id, "sprite_wall", Position(300, 300), image_path="wall1.png", scale_x=0.1, scale_y=0.1, collidable=True, layer='obstacles')
         logger.info(f"Created sprites: {result1}, {result2}, {result3}, {result4}, {result5}")
         # add player        
-        result6=game_context.Actions.create_animated_sprite(test_table.table_id, "sprite_player", Position(0, 0), image_path="soldier/handgun/move.png", atlas_path="resources/soldier/handgun/move.json", scale_x=0.5, scale_y=0.5, collidable=True )
+        result9=game_context.Actions.create_animated_sprite(test_table.table_id, "sprite_foots_run", Position(0, 0), image_path="soldier/foots/run.png", atlas_path="resources/soldier/foots/run.json", scale_x=0.5, scale_y=0.5, collidable=True, visible=False) 
+        result6=game_context.Actions.create_animated_sprite(test_table.table_id, "sprite_player_idle", Position(0, 0), image_path="soldier/handgun/idle.png", atlas_path="resources/soldier/handgun/idle.json", scale_x=0.5, scale_y=0.5, collidable=True )
+        result7=game_context.Actions.create_animated_sprite(test_table.table_id, "sprite_player_move", Position(0, 0), image_path="soldier/handgun/move.png", atlas_path="resources/soldier/handgun/move.json", scale_x=0.5, scale_y=0.5, collidable=True, visible=False) 
+        result8=game_context.Actions.create_animated_sprite(test_table.table_id, "sprite_player_shoot", Position(0, 0), image_path="soldier/handgun/shoot.png", atlas_path="resources/soldier/handgun/shoot.json", scale_x=0.5, scale_y=0.5, collidable=True, visible=False) 
+        
         if result6.success and result6.data:
             game_context.player.sprite = result6.data['sprite']
             game_context.player.sprite.coord_x = game_context.player.coord_x
             game_context.player.sprite.coord_y = game_context.player.coord_y
+        if result6.success and result7.success and result8.success and result9.success:
+            for sprite in [result6.data['sprite'], result7.data['sprite'], result8.data['sprite'], result9.data['sprite']]:
+                game_context.player.sprite_dict[sprite.sprite_id] = sprite
+        # Add data for bullets
+        game_context.player.sprite_bullet_dict= {
+            "sprite_path": "bullets/pistol_bullet/bullet.png",
+            "atlas_path": "resources/bullets/pistol_bullet/bullet.json",
+        }
+                
+
     # Initialize RenderManager
     try:
         logger.info("Initializing RenderManager...")
@@ -307,6 +353,9 @@ def main():
         # Final buffer swap to display both SDL and ImGui content
         sdl3.SDL_GL_SwapWindow(context.window)        
     # Cleanup
+    sdl3.Mix_FreeMusic(context.music)
+    sdl3.Mix_CloseAudio()
+    sdl3.Mix_Quit()
     sdl3.SDL_DestroyRenderer(context.renderer)
     sdl3.SDL_DestroyWindow(context.window)
     sdl3.SDL_Quit()
