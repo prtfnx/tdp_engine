@@ -2,9 +2,10 @@ import sdl3
 import ctypes
 import logging
 import math
+import time
 from tools.logger import setup_logger
 from typing import Optional, Dict, List, Any, Union, Tuple, TYPE_CHECKING
-from core.Sprite import Sprite
+from core.Sprite import Sprite, AnimatedSprite
 from dataclasses import dataclass
 from core.ContextTable import ContextTable
 from functools import lru_cache
@@ -29,7 +30,7 @@ class RenderManager():
         self.LightManager: Optional[LightManager] = None
         self.GeometricManager: Optional[GeometricManager] = None
         # Layers of sprites to render:
-        self.dict_of_sprites_list: Dict[str, List[Sprite]] = {}
+        self.dict_of_sprites_list: Dict[str, List[Union[Sprite, AnimatedSprite]]] = {}
         # Layer settings for each layer
         self.layer_settings: Dict[str, LayerSettings] = {}
         self.configure_layers()  # Initialize with default settings
@@ -134,7 +135,7 @@ class RenderManager():
                 is_selected = (selected_layer is None) or (layer_name == selected_layer)
                 self.render_layer(self.dict_of_sprites_list[layer_name], layer_name, is_selected, context)
 
-    def render_layer(self, layer: List[Sprite], layer_name: Optional[str] = None, is_selected_layer: bool = True, context=None):
+    def render_layer(self, layer: List[Union[Sprite, AnimatedSprite]], layer_name: Optional[str] = None, is_selected_layer: bool = True, context=None):
         """Render a single layer of sprites with optional transparency for non-selected layers"""
         
         # Special handling for fog_of_war layer - use stencil buffer approach
@@ -158,10 +159,32 @@ class RenderManager():
                 self.render_fog_layer_texture(hide_rectangles, reveal_rectangles, table, context)
             return
         
-        # Render sprites in the layer
+        # Render sprites in the layer (with animation support)
+        
         for sprite in layer:
-            if sprite.texture and hasattr(sprite, 'frect'):
-                # Apply transparency for non-selected layers
+            # Animation support: if sprite has frames, animate     
+            if isinstance(sprite, AnimatedSprite):
+                sprite.update_animation()
+                src_frect = sprite.get_current_frame_frect()
+                if not is_selected_layer:
+                    sdl3.SDL_SetTextureAlphaMod(sprite.texture, ctypes.c_ubyte(128))
+                else:
+                    sdl3.SDL_SetTextureAlphaMod(sprite.texture, ctypes.c_ubyte(255))
+                # Rotation
+                rotation = getattr(sprite, 'rotation', 0.0)
+                if rotation != 0.0:
+                    center_point = sdl3.SDL_FPoint()
+                    center_point.x = ctypes.c_float(sprite.frect.w / 2)
+                    center_point.y = ctypes.c_float(sprite.frect.h / 2)
+                    sdl3.SDL_RenderTextureRotated(self.renderer, sprite.texture, src_frect,
+                                                sprite.frect,
+                                                 ctypes.c_double(rotation),
+                                                 ctypes.byref(center_point),
+                                                 sdl3.SDL_FLIP_NONE)
+                else:                    
+                    sdl3.SDL_RenderTexture(self.renderer, sprite.texture, src_frect, sprite.frect)
+            elif sprite.texture and hasattr(sprite, 'frect'):
+                # static sprite rendering
                 if not is_selected_layer:
                     # Set sprite to semi-transparent (50% alpha)
                     sdl3.SDL_SetTextureAlphaMod(sprite.texture, ctypes.c_ubyte(128))
@@ -172,25 +195,21 @@ class RenderManager():
                 # Check if sprite has rotation
                 rotation = getattr(sprite, 'rotation', 0.0)
                 if rotation != 0.0:
-                    # Render with rotation - center point should be relative to dstrect
-                    # According to SDL3 docs: center is relative to dstrect, not absolute
                     center_point = sdl3.SDL_FPoint()
-                    center_point.x = ctypes.c_float(sprite.frect.w / 2)  # Relative to sprite rect
-                    center_point.y = ctypes.c_float(sprite.frect.h / 2)  # Relative to sprite rect
-                    
-                    sdl3.SDL_RenderTextureRotated(self.renderer, sprite.texture, None, 
-                                                ctypes.byref(sprite.frect),
-                                                ctypes.c_double(rotation),
-                                                ctypes.byref(center_point),
-                                                sdl3.SDL_FLIP_NONE)
+                    center_point.x = ctypes.c_float(sprite.frect.w / 2)
+                    center_point.y = ctypes.c_float(sprite.frect.h / 2)
+                    sdl3.SDL_RenderTextureRotated(self.renderer, sprite.texture, None,
+                                                 ctypes.byref(sprite.frect),
+                                                 ctypes.c_double(rotation),
+                                                 ctypes.byref(center_point),
+                                                 sdl3.SDL_FLIP_NONE)
                 else:
-                    # Render without rotation
-                   logger.debug(f"Rendering sprite {sprite.name} in layer {layer_name} at "
-                                f"position {sprite.frect.x}, {sprite.frect.y} "
-                                f"w and h {sprite.frect.w}, {sprite.frect.h} "
-                                f"exc_info=with texture {sprite.texture}")
-                   sdl3.SDL_RenderTexture(self.renderer, sprite.texture, None, 
-                                           ctypes.byref(sprite.frect))   
+                    logger.debug(f"Rendering sprite {sprite.name} in layer {layer_name} at "
+                                 f"position {sprite.frect.x}, {sprite.frect.y} "
+                                 f"w and h {sprite.frect.w}, {sprite.frect.h} "
+                                 f"exc_info=with texture {sprite.texture}")
+                    sdl3.SDL_RenderTexture(self.renderer, sprite.texture, None,
+                                          ctypes.byref(sprite.frect))
 
     def render_texture(self, texture: sdl3.SDL_Texture, 
                        sfrect: Optional[sdl3.SDL_FRect] = None,
@@ -482,9 +501,9 @@ class RenderManager():
             # Prepare lighting effects
             # TODO - make table.player a Player object
             #logger.info("Preparing lighting effects")
-            table.player =  table.selected_sprite
+            table.player =  context.player
             #logger.debug(f"Preparing lighting for player: {getattr(table.player, 'name', None)} at position: {getattr(table.player, 'frect', None)}")
-            self.prepare_lighting(table.player)
+            self.prepare_lighting(table.player.sprite)
             # Render all layers with lighting
             selected_layer = context.selected_layer if context else None
             self.render_all_layers(selected_layer, context)
