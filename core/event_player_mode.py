@@ -14,7 +14,6 @@ def handle_event(cnt, event):
             try:
                 cnt.pressed_keys.add(event.key.scancode)
                 update_player_acceleration(cnt)
-                print(f"Pressed keys: {cnt.pressed_keys}")
                 return True
             except Exception as e:
                 logger.error(f"Error handling key down: {e}")
@@ -63,7 +62,7 @@ def handle_event(cnt, event):
                 return True
         case _:
             # Handle other events if necessary
-            logger.debug(f"Unhandled event type: {event.type}")
+            #logger.debug(f"Unhandled event type: {event.type}")
             return True
 
 # New function to update player acceleration based on pressed keys

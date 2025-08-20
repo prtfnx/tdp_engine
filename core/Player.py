@@ -1,6 +1,7 @@
 import math
 import sdl3
 import uuid
+import random
 from typing import Optional, TYPE_CHECKING
 from ctypes import c_float, byref
 from venv import logger
@@ -10,8 +11,8 @@ if TYPE_CHECKING:
     from core.Sprite import Sprite
 ACCELERATION_COEF = 0.1
 SPEED_COEF = 0.01
-EPSILON = 0.001  # Small value to avoid floating point precision issues
-SHOOT_COOLDOWN = 0.5  # 500 ms cooldown for shooting
+EPSILON = 0.01  # Small value to avoid floating point precision issues
+SHOOT_COOLDOWN = 0.3  # 300 ms cooldown for shooting
 class PlayerState(Enum):
     IDLE = auto()
     MOVING = auto()
@@ -26,8 +27,7 @@ class Player():
         self.health: int = 100
         self.score: int = 0
         self.level: int = 1
-        self.is_alive: bool = True
-        self.speed: float = 0
+        self.is_alive: bool = True        
         self.direction: float = 0
         self.acceleration: float = 0
         self.sprite: Optional[Sprite] = None        
@@ -35,6 +35,7 @@ class Player():
         self.go_y: bool = False
         self.state = PlayerState.IDLE
         self.context = context
+        self.weapon_angle: float = 0.0 
         #timers
         self.shoot_CD = SHOOT_COOLDOWN
         self.last_shoot_time = 0  # Timestamp of the last shot
@@ -59,8 +60,6 @@ class Player():
                 self.sprite.visible = False
                 self.sprite = sprite_player_idle
                 self.sprite.visible = True
-                sprite_foots_run = self.sprite_dict.get("sprite_foots_run")
-                sprite_foots_run.visible = False
 
             case PlayerState.MOVING:                
                 sprite_player_move = self.sprite_dict.get("sprite_player_move")
@@ -70,12 +69,6 @@ class Player():
                 self.sprite.visible = False
                 self.sprite = sprite_player_move
                 self.sprite.visible = True
-                # Handle foots
-                sprite_foots_run = self.sprite_dict.get("sprite_foots_run")
-                sprite_foots_run.coord_x = self.coord_x
-                sprite_foots_run.coord_y = self.coord_y
-                sprite_foots_run.rotation = self.sprite.rotation
-                sprite_foots_run.visible = True
 
             case PlayerState.SHOOTING:
                 sprite_player_shoot = self.sprite_dict.get("sprite_player_shoot")
@@ -85,8 +78,7 @@ class Player():
                 self.sprite.visible = False
                 self.sprite = sprite_player_shoot
                 self.sprite.visible = True
-                sprite_foots_run = self.sprite_dict.get("sprite_foots_run")
-                sprite_foots_run.visible = False
+
             case PlayerState.DYING:
                 pass #TODO
         self.state = new_state
@@ -165,10 +157,24 @@ class Player():
         
     def sprite_step(self):
         """Update player sprite based on current state."""    
-        self.sprite_dict["sprite_foots_run"].rotation = self.weapon_angle
+        sprite_foots_run = self.sprite_dict["sprite_foots_run"]
+        sprite_foots_run.rotation = self.weapon_angle
+        if self.speed_x > 0.1 or self.speed_y > 0.1:            
+            # Center foots_run on self.sprite           
+            offset_x = (self.sprite.frect.w - sprite_foots_run.frect.w) / 2
+            offset_y = (self.sprite.frect.h - sprite_foots_run.frect.h) / 2
+            sprite_foots_run.coord_x = c_float(self.coord_x.value + offset_x)
+            sprite_foots_run.coord_y = c_float(self.coord_y.value + offset_y)
+            
+            sprite_foots_run.rotation = self.sprite.rotation
+            sprite_foots_run.visible = True
+        else:
+            sprite_foots_run.visible = False
+
     def state_step(self):
         """Update player state based on current conditions."""
-        if self.state == PlayerState.SHOOTING and self.last_shoot_time > 1:
+        current_time = sdl3.SDL_GetTicks() / 1000.0  # Get current time in seconds
+        if self.state == PlayerState.SHOOTING and current_time-self.last_shoot_time > 0.3:
             if self.speed == 0:
                 logger.debug("Player is idle after shooting, updating state to IDLE.")
                 self.update_state(PlayerState.IDLE)
@@ -180,9 +186,8 @@ class Player():
             self.update_state(PlayerState.MOVING)
         elif self.state == PlayerState.MOVING and self.speed_x == 0 and self.speed_y == 0:
             logger.debug("Player is idle after being moving, updating state to IDLE.")
-            self.update_state(PlayerState.IDLE)
-        if self.state == PlayerState.MOVING:
-            self.sprite_step()
+            self.update_state(PlayerState.IDLE)        
+        self.sprite_step()
 
     def physics_step(self, dt: float, acceleration_friction: float=1.0, speed_friction: float=1.0):
         """Update acceleration, speed and position for a physics step."""
@@ -190,6 +195,7 @@ class Player():
         self.update_speed(dt, speed_friction)
         self.update_position(dt)
         self.state_step()
+        #print(f'player state: {self.state} and sprite selected: {self.sprite} and  {self.last_shoot_time=} and {sdl3.SDL_GetTicks() / 1000.0=}')
 
         
 
@@ -218,8 +224,10 @@ class Player():
         current_time = sdl3.SDL_GetTicks() / 1000.0  # Get current time in seconds
         if current_time - self.last_shoot_time >= self.shoot_CD:
             self.last_shoot_time = current_time
-            self.update_state(PlayerState.SHOOTING)
+            self.set_state(PlayerState.SHOOTING)
             print("Shooting!")
+            sound = random.choice(self.context.GunshotSounds)
+            sdl3.Mix_PlayChannel(-1, sound ,0 )  # Play random gunshot sound
             self.create_bullet() # TODO refactor to proper system    
 
     def create_bullet(self):
