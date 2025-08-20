@@ -162,54 +162,55 @@ class RenderManager():
         # Render sprites in the layer (with animation support)
         
         for sprite in layer:
-            # Animation support: if sprite has frames, animate     
-            if isinstance(sprite, AnimatedSprite):
-                sprite.update_animation()
-                src_frect = sprite.get_current_frame_frect()
-                if not is_selected_layer:
-                    sdl3.SDL_SetTextureAlphaMod(sprite.texture, ctypes.c_ubyte(128))
-                else:
-                    sdl3.SDL_SetTextureAlphaMod(sprite.texture, ctypes.c_ubyte(255))
-                # Rotation
-                rotation = getattr(sprite, 'rotation', 0.0)
-                if rotation != 0.0:
-                    center_point = sdl3.SDL_FPoint()
-                    center_point.x = ctypes.c_float(sprite.frect.w / 2)
-                    center_point.y = ctypes.c_float(sprite.frect.h / 2)
-                    sdl3.SDL_RenderTextureRotated(self.renderer, sprite.texture, src_frect,
-                                                sprite.frect,
-                                                 ctypes.c_double(rotation),
-                                                 ctypes.byref(center_point),
-                                                 sdl3.SDL_FLIP_NONE)
-                else:                    
-                    sdl3.SDL_RenderTexture(self.renderer, sprite.texture, src_frect, sprite.frect)
-            elif sprite.texture and hasattr(sprite, 'frect'):
-                # static sprite rendering
-                if not is_selected_layer:
-                    # Set sprite to semi-transparent (50% alpha)
-                    sdl3.SDL_SetTextureAlphaMod(sprite.texture, ctypes.c_ubyte(128))
-                else:
-                    # Ensure sprite is fully opaque for selected layer
-                    sdl3.SDL_SetTextureAlphaMod(sprite.texture, ctypes.c_ubyte(255))
-                
-                # Check if sprite has rotation
-                rotation = getattr(sprite, 'rotation', 0.0)
-                if rotation != 0.0:
-                    center_point = sdl3.SDL_FPoint()
-                    center_point.x = ctypes.c_float(sprite.frect.w / 2)
-                    center_point.y = ctypes.c_float(sprite.frect.h / 2)
-                    sdl3.SDL_RenderTextureRotated(self.renderer, sprite.texture, None,
-                                                 ctypes.byref(sprite.frect),
-                                                 ctypes.c_double(rotation),
-                                                 ctypes.byref(center_point),
-                                                 sdl3.SDL_FLIP_NONE)
-                else:
-                    logger.debug(f"Rendering sprite {sprite.name} in layer {layer_name} at "
-                                 f"position {sprite.frect.x}, {sprite.frect.y} "
-                                 f"w and h {sprite.frect.w}, {sprite.frect.h} "
-                                 f"exc_info=with texture {sprite.texture}")
-                    sdl3.SDL_RenderTexture(self.renderer, sprite.texture, None,
-                                          ctypes.byref(sprite.frect))
+            if sprite.visible == True:
+                # Animation support: if sprite has frames, animate
+                if isinstance(sprite, AnimatedSprite):
+                    sprite.update_animation()
+                    src_frect = sprite.get_current_frame_frect()
+                    if not is_selected_layer:
+                        sdl3.SDL_SetTextureAlphaMod(sprite.texture, ctypes.c_ubyte(128))
+                    else:
+                        sdl3.SDL_SetTextureAlphaMod(sprite.texture, ctypes.c_ubyte(255))
+                    # Rotation
+                    rotation = getattr(sprite, 'rotation', 0.0)
+                    if rotation != 0.0:
+                        center_point = sdl3.SDL_FPoint()
+                        center_point.x = ctypes.c_float(sprite.frect.w / 2)
+                        center_point.y = ctypes.c_float(sprite.frect.h / 2)
+                        sdl3.SDL_RenderTextureRotated(self.renderer, sprite.texture, src_frect,
+                                                    sprite.frect,
+                                                    ctypes.c_double(rotation),
+                                                    ctypes.byref(center_point),
+                                                    sdl3.SDL_FLIP_NONE)
+                    else:                    
+                        sdl3.SDL_RenderTexture(self.renderer, sprite.texture, src_frect, sprite.frect)
+                elif sprite.texture and hasattr(sprite, 'frect'):
+                    # static sprite rendering
+                    if not is_selected_layer:
+                        # Set sprite to semi-transparent (50% alpha)
+                        sdl3.SDL_SetTextureAlphaMod(sprite.texture, ctypes.c_ubyte(128))
+                    else:
+                        # Ensure sprite is fully opaque for selected layer
+                        sdl3.SDL_SetTextureAlphaMod(sprite.texture, ctypes.c_ubyte(255))
+                    
+                    # Check if sprite has rotation
+                    rotation = getattr(sprite, 'rotation', 0.0)
+                    if rotation != 0.0:
+                        center_point = sdl3.SDL_FPoint()
+                        center_point.x = ctypes.c_float(sprite.frect.w / 2)
+                        center_point.y = ctypes.c_float(sprite.frect.h / 2)
+                        sdl3.SDL_RenderTextureRotated(self.renderer, sprite.texture, None,
+                                                    ctypes.byref(sprite.frect),
+                                                    ctypes.c_double(rotation),
+                                                    ctypes.byref(center_point),
+                                                    sdl3.SDL_FLIP_NONE)
+                    else:
+                        logger.debug(f"Rendering sprite {sprite.name} in layer {layer_name} at "
+                                    f"position {sprite.frect.x}, {sprite.frect.y} "
+                                    f"w and h {sprite.frect.w}, {sprite.frect.h} "
+                                    f"exc_info=with texture {sprite.texture}")
+                        sdl3.SDL_RenderTexture(self.renderer, sprite.texture, None,
+                                            ctypes.byref(sprite.frect))
 
     def render_texture(self, texture: sdl3.SDL_Texture, 
                        sfrect: Optional[sdl3.SDL_FRect] = None,
