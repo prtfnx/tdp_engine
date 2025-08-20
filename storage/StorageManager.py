@@ -157,7 +157,7 @@ class StorageManager:
                     'subdir': subdir,
                     'success': False,
                     'data': None,
-                    'error': 'File not found',
+                    'error': 'File not found: ' + str(self.root_path / subdir / filename),
                     'to_server': to_server
                 })
             except Exception as e:
