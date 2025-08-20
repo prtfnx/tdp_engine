@@ -34,7 +34,8 @@ class Sprite:
                  sprite_id: Optional[str] = None, 
                  die_timer: Optional[float] = None,
                  asset_id: Optional[str] = None, 
-                 context: Optional['Context'] = None) -> None:
+                 context: Optional['Context'] = None,
+                 visible: bool = True) -> None:
         # Initialize all ctypes structures properly
         self.coord_x: ctypes.c_float = ctypes.c_float(coord_x)  
         self.coord_y: ctypes.c_float = ctypes.c_float(coord_y)  
@@ -58,6 +59,7 @@ class Sprite:
         self.layer: str = layer
         self.texture: Optional[sdl3.SDL_Texture] = None
         self.rotation: float = 0.0
+        self.visible: bool = visible  # Visibility flag
           # Compendium entity support
         self.compendium_entity: Optional[Any] = compendium_entity
         self.entity_type: Optional[str] = entity_type
