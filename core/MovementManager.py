@@ -1,12 +1,14 @@
 import sdl3
 import ctypes
+from core.Player import ACCELERATION_COEF
 from tools.logger import setup_logger
 
 
 logger = setup_logger(__name__)
 
 TIME_TO_DIE = 2000
-
+ACCELERATION_FRICTION = 0.999
+SPEED_FRICTION = 0.995
 def sync_sprite_move(context, sprite, old_pos, new_pos):
     """Handle sprite movement with network sync"""
     if not hasattr(context, 'protocol') or not context.protocol:
@@ -139,11 +141,9 @@ def move_sprites(cnt, delta_time):
     width = cnt.window_width
     height = cnt.window_height   
     # Player managment
-    friction = 0.0 # TODO: implement friction
-    cnt.player.physics_step(delta_time, friction)
-    
-    #print(f'Player position: {cnt.player.position}, player speed: {[cnt.player.speed_x, cnt.player.speed_y]}, '
-          #f'player acceleration: {[cnt.player.acceleration_x, cnt.player.acceleration_y]}')
+    speed_friction = SPEED_FRICTION # TODO: implement friction
+    acceleration_friction = ACCELERATION_FRICTION
+    cnt.player.physics_step(delta_time, acceleration_friction, speed_friction)
     for layer, sprite_list in cnt.current_table.dict_of_sprites_list.items():
         for sprite in sprite_list:
             # Movement
