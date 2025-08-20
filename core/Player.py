@@ -1,3 +1,4 @@
+import math
 from typing import Optional, TYPE_CHECKING
 from ctypes import c_float
 if TYPE_CHECKING:
@@ -98,10 +99,17 @@ class Player():
         """Set weapon direction based on mouse position."""
         dx = mouse_x - self.coord_x.value
         dy = mouse_y - self.coord_y.value
+        print(f"Setting weapon direction with dx: {dx}, dy: {dy}")
         length = (dx ** 2 + dy ** 2) ** 0.5
         if length != 0:
             self.weapon_dir = (dx / length, dy / length)
         else:
-            self.weapon_dir = (0, 0)
-        import math
-        self.weapon_angle = math.atan2(dy, dx)
+            self.weapon_dir = (0, 0)        
+        angle = math.degrees(math.atan2(dy, dx))
+        if angle < 0:
+            angle += 360
+        self.weapon_angle = angle
+        self.sprite.rotation = self.weapon_angle
+        print(f"Weapon direction set to: {self.weapon_dir}")
+        print(f"Weapon angle set to: {self.weapon_angle}")
+        print(f'sprite rotation set to: {self.sprite.rotation}')
