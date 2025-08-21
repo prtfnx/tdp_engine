@@ -282,7 +282,7 @@ class AnimatedSprite(Sprite):
             self.current_frame = (self.current_frame + 1) % len(self.frame_frects)
             self.last_frame_time = now
 
-    def reload_texture(self, texture: Any, w: int, h: int):  # texture: SDL_Texture
+    def reload_texture(self, texture: Any, w: int, h: int)-> bool:  # texture: SDL_Texture
         """Reload texture for animated sprite"""     
         old_texture = self.texture        
         self.texture = texture
@@ -301,6 +301,7 @@ class AnimatedSprite(Sprite):
             self.frect.h = ctypes.c_float(h)
             self.original_w = float(w)
             self.original_h = float(h)
+        return True
 
         
 
