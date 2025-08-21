@@ -1,4 +1,5 @@
 from ctypes import c_void_p, c_float, c_int
+from multiprocessing import context
 import queue
 import time
 import uuid
@@ -10,6 +11,7 @@ from render.RenderManager import RenderManager
 from render.GeometricManager import GeometricManager
 from storage.AssetManager import ClientAssetManager
 from tools.logger import setup_logger
+from core.Player import Player
 
 # SDL3 type hints using actual SDL3 types
 if TYPE_CHECKING:
@@ -28,7 +30,7 @@ else:
     SDL_GLContext = Any
 
 
-logger = setup_logger(__name__, level='WARNING')
+logger = setup_logger(__name__, level='DEBUG')
 
 CELL_SIDE: int = 20
 MIN_SCALE: float = 0.1
@@ -153,7 +155,7 @@ class Context:
     def add_sprite(self, texture_path, scale_x=1, scale_y=1, layer='tokens',
                    character=None, moving=False, speed=None,
                    collidable=False, table=None, coord_x=0.0, coord_y=0.0,sprite_id=None,table_id=None,visible=True,
-                   **kwargs):
+                   is_player=False, **kwargs):
         """Add a sprite to the specified layer in the current table"""
         #TODO refactor to use sprite data dict to unify sprite creation
         
@@ -198,7 +200,8 @@ class Context:
                 sprite_id=sprite_id,
                 layer=layer,
                 context=self,
-                visible=visible
+                visible=visible,
+                is_player= is_player
             )
             
             # Check if sprite creation was successful
@@ -228,7 +231,7 @@ class Context:
     def add_animated_sprite(self, texture_path, atlas_path, scale_x=1, scale_y=1, layer='tokens',
                    character=None, moving=False, speed=None,
                    collidable=False, table=None, coord_x=0.0, coord_y=0.0,sprite_id=None,table_id=None,visible=True,
-                   frame_duration=100, rotation=0.0, **kwargs):
+                   frame_duration=100, rotation=0.0,is_player=False, **kwargs):
         """Add a sprite to the specified layer in the current table"""
         #TODO refactor to use sprite data dict to unify sprite creation
         
@@ -255,7 +258,7 @@ class Context:
             return None
         if  isinstance(texture_path, str):
             texture_path = texture_path.encode()            
-        logger.debug(f"Adding sprite to layer {layer} with texture {texture_path}")
+        logger.debug(f"Adding sprite to layer {layer} with texture {texture_path}")        
         try:
             # Create sprite with error handling
             logger.info(f"Creating sprite from {texture_path} in layer {layer}")
@@ -276,7 +279,8 @@ class Context:
                 visible=visible,
                 atlas_path=atlas_path,
                 frame_duration=frame_duration,
-                rotation=rotation
+                rotation=rotation,
+                is_player= is_player
             )
             
             # Check if sprite creation was successful
@@ -418,91 +422,81 @@ class Context:
     
     def create_table_from_dict(self, dict_data):
         """Create table from dictionary data"""
-        try:
-            logger.info(f"Creating table from dict: {dict_data}")   
-            # Get table info from dict data
-            table_name = dict_data.get('table_name')
-            table_id = dict_data.get('table_id')  # May be None for legacy saves
-            
-            # Create the table
-            table = ContextTable(
-                table_name=table_name,
-                width=dict_data.get('width', 1920), 
-                height=dict_data.get('height', 1080),
-                table_id=table_id
-            )
-            
-            self.list_of_tables.append(table)
-            
-            # Set as current table if it's the first one
-            if not self.current_table:
-                self.current_table = table
-              # Set table properties
-            table.scale = dict_data.get('scale', 1.0)
-            table.x_moved = dict_data.get('x_moved', 1.0)
-            table.y_moved = dict_data.get('y_moved', 1.0)
-            table.show_grid = dict_data.get('show_grid', True)
-            table.cell_side = dict_data.get('cell_side', CELL_SIDE)
-                        # Add sprites from layers
-            layers_data = dict_data.get('layers', {})
-            for layer, sprites_data in layers_data.items():
-                if layer in table.layers:  # Only add to valid layers
-                    print(f"Adding sprites to layer: {layer}")
-                    print(f"sprite data {sprites_data}")
-                    if not isinstance(sprites_data, list):  # unpack list TODO - change                        
-                        for sprite_data in sprites_data.values():
-                            try:                                    
-                                sprite_action = self.Actions.create_sprite(
-                                    to_server = dict_data.get('to_server', False),
-                                    image_path=sprite_data.get('texture_path', ''),
-                                    scale_x=sprite_data.get('scale_x', 1.0),
-                                    scale_y=sprite_data.get('scale_y', 1.0),
-                                    layer=layer,
-                                    character=sprite_data.get('character'),
-                                    moving=sprite_data.get('moving', False),
-                                    speed=sprite_data.get('speed'),
-                                    collidable=sprite_data.get('collidable', False),
-                                    table_id=table.table_id,
-                                    position=sprite_data.get('position', None),
-                                    sprite_id=sprite_data.get('sprite_id', None),                                
-                                )
-                                logger.debug(f"Result of creating sprite: {sprite_action}")
-                                if not sprite_action.success:
-                                    logger.warning(f"Failed to create sprite from {sprite_data.get('texture_path')}")
-                                    
-                            except Exception as e:
-                                logger.error(f"Error creating sprite: {e}")
-                                continue
-                    else:
-                        sprite_data = sprites_data[0]
-                        try:                                    
-                            sprite_action = self.Actions.create_sprite(
-                                to_server = dict_data.get('to_server', False),
-                                image_path=sprite_data.get('texture_path', ''),
-                                scale_x=sprite_data.get('scale_x', 1.0),
-                                scale_y=sprite_data.get('scale_y', 1.0),
-                                layer=layer,
-                                character=sprite_data.get('character'),
-                                moving=sprite_data.get('moving', False),
-                                speed=sprite_data.get('speed'),
-                                collidable=sprite_data.get('collidable', False),
+    
+        logger.info(f"Creating table from dict: {dict_data}")   
+        # Get table info from dict data
+        table_name = dict_data.get('table_name')
+        table_id = dict_data.get('table_id')  # May be None for legacy saves
+        
+        # Create the table
+        table = ContextTable(
+            table_name=table_name,
+            width=dict_data.get('width', 1920), 
+            height=dict_data.get('height', 1080),
+            table_id=table_id
+        )
+        
+        self.list_of_tables.append(table)
+        
+        # Set as current table if it's the first one
+        if not self.current_table:
+            self.current_table = table
+            # Set table properties
+        table.scale = dict_data.get('scale', 1.0)
+        table.x_moved = dict_data.get('x_moved', 1.0)
+        table.y_moved = dict_data.get('y_moved', 1.0)
+        table.show_grid = dict_data.get('show_grid', True)
+        table.cell_side = dict_data.get('cell_side', CELL_SIDE)
+                    # Add sprites from layers
+        layers_data = dict_data.get('layers', {})
+        player_sprites=[]
+        for layer, sprites_data in layers_data.items():
+            if layer in table.layers and len(sprites_data) > 0:  # Only add to valid layers
+                print(f"Adding sprites to layer: {layer}")
+                print(f"sprite data {sprites_data}")
+                
+                # if isinstance(sprites_data, list)  > 0:  # unpack list TODO - change
+                #     sprites_data = sprites_data[0]                
+                try:
+                    for sprite_data in sprites_data:
+                        if 'frame_rects' in sprite_data:
+                            sprite_action = self.Actions.create_animated_sprite(                            
                                 table_id=table.table_id,
-                                position=sprite_data.get('position', None),
-                                sprite_id=sprite_data.get('sprite_id', None),                                
+                                image_path = sprite_data.get('texture_path'),
+                                position = (sprite_data.get('coord_x'), sprite_data.get('coord_y')),
+                                **sprite_data
                             )
-                            logger.debug(f"Result of creating sprite: {sprite_action}")
-                            if not sprite_action.success:
-                                logger.warning(f"Failed to create sprite from {sprite_data.get('texture_path')}")
-                                
-                        except Exception as e:
-                            logger.error(f"Error creating sprite: {e}")
-                            continue
-            logger.info(f"Successfully created table '{table.name}' from dict")
-            return table
+                        else:                                    
+                            sprite_action = self.Actions.create_sprite(
+                                table_id=table.table_id,
+                                image_path = sprite_data.get('texture_path'),
+                                position = (sprite_data.get('coord_x'), sprite_data.get('coord_y')),
+                                **sprite_data
+                            )
+                        print(f'must be sprite:{sprite_action.data["sprite"]}')
+                        print(f"is player? {sprite_action.data['sprite'].is_player}")
+                        if sprite_action.data['sprite'].is_player:
+                            player_sprites.append(sprite_action.data['sprite'])
+
+                        logger.debug(f"Result of creating sprite: {sprite_action}")
+                        if not sprite_action.success:
+                            logger.warning(f"Failed to create sprite from {sprite_data.get('texture_path')}") 
+                except Exception as e:
+                    logger.error(f"Error creating sprite from data {sprite_data}: {e}")
+                    continue                         
+        # Player construction
+        if 'player' in dict_data:
+            player_data = dict_data.get('player', {})
+            player = Player(player_data.get('name', 'John'), context=self)
+            player.from_dict(player_data, player_sprites)
+            self.player = player
+            table.player = player
+
+        logger.info(f"Successfully created table '{table.name}' from dict")
+        self.current_table = table  # Set as current table
+        return table
             
-        except Exception as e:
-            logger.error(f"Error creating table from dict: {e}")
-            return None
+ 
 
     def send_table_update(self, update_type: str, data: dict):
         """Send table update to server"""
