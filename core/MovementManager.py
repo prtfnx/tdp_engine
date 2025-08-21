@@ -1,5 +1,7 @@
 import sdl3
+import time
 import ctypes
+import math
 from core.Player import ACCELERATION_COEF
 from tools.logger import setup_logger
 import numpy as np
@@ -21,13 +23,32 @@ class MovementManager:
         self.layers = list(context_table.dict_of_sprites_list.keys())
         self.player = player
 
+    def get_transformed_aabb(self, sprite):
+        """
+        Calculate the transformed AABB for a sprite, accounting for scale only (rotation ignored for collision).
+        """
+        # Get top-left and bottom-right corners (no rotation)
+        x = sprite.coord_x.value
+        y = sprite.coord_y.value
+        w = sprite.original_w * sprite.scale_x
+        h = sprite.original_h * sprite.scale_y
+        min_x = x
+        min_y = y
+        max_x = x + w
+        max_y = y + h
+        if self.context.debug_mode or self.context.is_gm:
+            self.context.RenderManager.aabb_rectangles.append((min_x, min_y, max_x, max_y))
+        return min_x, min_y, max_x, max_y
+
     def move_and_collide(self, delta_time):
         # Debug: print all sprite frect values before collision check
         # print('--- Sprite frect values before collision check ---')
         # for layer, sprite_list in self.table.dict_of_sprites_list.items():
         #     for sprite in sprite_list:
         #         print(f'Layer: {layer}, Sprite: {sprite}, frect: x={sprite.frect.x}, y={sprite.frect.y}, w={sprite.frect.w}, h={sprite.frect.h}, collidable={sprite.collidable}')
-        # Player management        
+        #start = time.time()
+        # Player management
+        player_last_coord = [self.player.coord_x.value, self.player.coord_y.value]
         speed_friction = SPEED_FRICTION # TODO: implement friction
         acceleration_friction = ACCELERATION_FRICTION
         self.player.physics_step(delta_time, acceleration_friction, speed_friction)
@@ -40,74 +61,111 @@ class MovementManager:
                 if sprite.die_timer is not None:
                     sprite.die_timer -= delta_time
                     if sprite.die_timer <= 0:
-                        sprite.die()
+                        #sprite.die() # no need - textures cached
                         self.table.dict_of_sprites_list[sprite.layer].remove(sprite)
-                   
-        
-        # Batch collision for each relevant layer pair
-        for layer_a, targets in self.COLLISION_MATRIX.items():            
+        # Efficient batch collision checking (all sprites except player)
+        for layer_a, targets in self.COLLISION_MATRIX.items():
             sprites_a = [s for s in self.table.dict_of_sprites_list.get(layer_a, []) if getattr(s, 'collidable', True)]
-            rects_a = np.array([[s.frect.x, s.frect.y, s.frect.w, s.frect.h] for s in sprites_a], dtype=np.float32)
             for layer_b in targets:
                 sprites_b = [s for s in self.table.dict_of_sprites_list.get(layer_b, []) if getattr(s, 'collidable', True)]
-                rects_b = np.array([[s.frect.x, s.frect.y, s.frect.w, s.frect.h] for s in sprites_b], dtype=np.float32)
-                if rects_a.size == 0 or rects_b.size == 0:
+                if not sprites_a or not sprites_b:
                     continue
-                # Batch AABB collision
-                a_min = rects_a[:, :2][:, None, :]
-                a_max = (rects_a[:, :2] + rects_a[:, 2:])[:, None, :]
-                b_min = rects_b[:, :2]
-                b_max = rects_b[:, :2] + rects_b[:, 2:]
-                collide = (a_max[...,0] > b_min[:,0]) & (b_max[:,0] > a_min[...,0]) & (a_max[...,1] > b_min[:,1]) & (b_max[...,1] > a_min[...,1])
-                # Handle collisions
+                # Build transformed AABBs for all sprites
+                a_aabbs = np.array([self.get_transformed_aabb(s) for s in sprites_a])  # (N, 4)
+                b_aabbs = np.array([self.get_transformed_aabb(s) for s in sprites_b])  # (M, 4)
+                a_min_x = a_aabbs[:, 0][:, None]
+                a_max_x = a_aabbs[:, 2][:, None]
+                a_min_y = a_aabbs[:, 1][:, None]
+                a_max_y = a_aabbs[:, 3][:, None]
+                b_min_x = b_aabbs[:, 0]
+                b_max_x = b_aabbs[:, 2]
+                b_min_y = b_aabbs[:, 1]
+                b_max_y = b_aabbs[:, 3]
+                # Check for overlap on both axes
+                collide_x = (a_max_x > b_min_x) & (b_max_x > a_min_x)
+                collide_y = (a_max_y > b_min_y) & (b_max_y > a_min_y)
+                collide = collide_x & collide_y
                 idx_a, idx_b = np.where(collide)
                 for i, j in zip(idx_a, idx_b):
                     sa = sprites_a[i]
                     sb = sprites_b[j]
                     if sa is sb:
-                        continue
-                    if sa is self.table.player or sb is self.table.player:
-                        print(f"Collision between player and sprite: {sa.sprite_id} <-> {sb.sprite_id}")
-                    sa.set_speed(sa.dx*(-0.3), sa.dy*(-0.3))
-                    #sa.collidable = False
-        #player collide check (use table coordinates)
+                        continue  # Skip self-collision
+                    # Compute overlap on both axes
+                    overlap_x = min(a_max_x[i, 0], b_max_x[j]) - max(a_min_x[i, 0], b_min_x[j])
+                    overlap_y = min(a_max_y[i, 0], b_max_y[j]) - max(a_min_y[i, 0], b_min_y[j])
+                    # Clamp on axis with smallest overlap
+                    if overlap_x < overlap_y:
+                        # Clamp X
+                        if a_min_x[i, 0] < b_min_x[j]:
+                            sa.coord_x.value = b_min_x[j] - (a_max_x[i, 0] - a_min_x[i, 0])
+                            logger.debug(f"Clamped {sa.sprite_id} to left of {sb.sprite_id}")
+                            sa.dx *= -0.5
+                        else:
+                            sa.coord_x.value = b_max_x[j]
+                            logger.debug(f"Clamped {sa.sprite_id} to right of {sb.sprite_id}")
+                            sa.dx *= -0.5
+                    else:
+                        # Clamp Y
+                        if a_min_y[i, 0] < b_min_y[j]:
+                            sa.coord_y.value = b_min_y[j] - (a_max_y[i, 0] - a_min_y[i, 0])
+                            logger.debug(f"Clamped {sa.sprite_id} above {sb.sprite_id}")
+                            sa.dy *= -0.5
+                        else:
+                            sa.coord_y.value = b_max_y[j]
+                            logger.debug(f"Clamped {sa.sprite_id} below {sb.sprite_id}")
+                            sa.dy *= -0.5
+        
+        # Efficient player collision check (against all obstacles)
         player = self.table.player
         all_collidable_sprites = [
             s for layer_sprites in self.table.dict_of_sprites_list.values()
             for s in layer_sprites if getattr(s, 'collidable', True) and getattr(s, 'is_player', False) is not True
         ]
-        collidable_rects = np.array([
-            [
-                s.coord_x.value if hasattr(s.coord_x, 'value') else float(s.coord_x),
-                s.coord_y.value if hasattr(s.coord_y, 'value') else float(s.coord_y),
-                s.original_w * s.scale_x,
-                s.original_h * s.scale_y
-            ]
-            for s in all_collidable_sprites
-        ], dtype=np.float32)
-        player_rect = np.array([
-            [
-                player.coord_x.value if hasattr(player.coord_x, 'value') else float(player.coord_x),
-                player.coord_y.value if hasattr(player.coord_y, 'value') else float(player.coord_y),
-                player.sprite.original_w * player.sprite.scale_x,
-                player.sprite.original_h * player.sprite.scale_y
-            ]
-        ], dtype=np.float32)
-        p_min = player_rect[:, :2]
-        p_max = player_rect[:, :2] + player_rect[:, 2:]
-        s_min = collidable_rects[:, :2]
-        s_max = collidable_rects[:, :2] + collidable_rects[:, 2:]
-
-        collide = (p_max[0,0] > s_min[:,0]) & (s_max[:,0] > p_min[0,0]) & (p_max[0,1] > s_min[:,1]) & (s_max[:,1] > p_min[0,1])
-        colliding_indices = np.where(collide)[0]
-        for idx in colliding_indices:
-            sprite = all_collidable_sprites[idx]
-            logger.debug(f"Collision between player and sprite: {self.player.sprite.sprite_id} <-> {sprite.sprite_id}")
-            player.speed_x*=-1
-            player.speed_y*=-1
-            player.acceleration_x*=-0.3
-            player.acceleration_y*=-0.3
-            player.update_position(delta_time)
+        if all_collidable_sprites:
+            p_min_x, p_min_y, p_max_x, p_max_y = self.get_transformed_aabb(player.sprite)
+            p_aabb = np.array([[p_min_x, p_min_y, p_max_x, p_max_y]])
+            s_aabbs = np.array([self.get_transformed_aabb(s) for s in all_collidable_sprites])
+            # Unpack for broadcasting
+            p_min_x = p_aabb[:, 0][:, None]
+            p_max_x = p_aabb[:, 2][:, None]
+            p_min_y = p_aabb[:, 1][:, None]
+            p_max_y = p_aabb[:, 3][:, None]
+            s_min_x = s_aabbs[:, 0]
+            s_max_x = s_aabbs[:, 2]
+            s_min_y = s_aabbs[:, 1]
+            s_max_y = s_aabbs[:, 3]
+            # Check for overlap on both axes
+            collide_x = (p_max_x > s_min_x) & (s_max_x > p_min_x)
+            collide_y = (p_max_y > s_min_y) & (s_max_y > p_min_y)
+            collide = collide_x & collide_y
+            idx_p, idx_s = np.where(collide)
+            for i, j in zip(idx_p, idx_s):
+                sprite = all_collidable_sprites[j]
+                # Compute overlap
+                overlap_x = min(p_max_x[0, 0], s_max_x[j]) - max(p_min_x[0, 0], s_min_x[j])
+                overlap_y = min(p_max_y[0, 0], s_max_y[j]) - max(p_min_y[0, 0], s_min_y[j])
+                # Clamp on axis with smallest overlap
+                if overlap_x < overlap_y:
+                    # Clamp X
+                    if p_min_x[0, 0] < s_min_x[j]:
+                        player.coord_x.value = s_min_x[j] - (p_max_x[0, 0] - p_min_x[0, 0])
+                        logger.debug(f"Player clamped to left of obstacle {sprite.sprite_id}")
+                        player.speed_x *= -0.5
+                    else:
+                        player.coord_x.value = s_max_x[j]
+                        logger.debug(f"Player clamped to right of obstacle {sprite.sprite_id}")
+                        player.speed_x *= -0.5
+                else:
+                    # Clamp Y
+                    if p_min_y[0, 0] < s_min_y[j]:
+                        player.coord_y.value = s_min_y[j] - (p_max_y[0, 0] - p_min_y[0, 0])
+                        logger.debug(f"Player clamped above obstacle {sprite.sprite_id}")
+                        player.speed_y *= -0.5
+                    else:
+                        player.coord_y.value = s_max_y[j]
+                        logger.debug(f"Player clamped below obstacle {sprite.sprite_id}")
+                        player.speed_y *= -0.5
 
         # Now update frect for rendering (screen coordinates)
         for layer, sprite_list in self.table.dict_of_sprites_list.items():
@@ -118,178 +176,4 @@ class MovementManager:
                     sprite.frect.y = ctypes.c_float(screen_y)
                     sprite.frect.w = ctypes.c_float(sprite.original_w * sprite.scale_x * self.table.table_scale)
                     sprite.frect.h = ctypes.c_float(sprite.original_h * sprite.scale_y * self.table.table_scale)
-        
-def sync_sprite_move(context, sprite, old_pos, new_pos):
-    """Handle sprite movement with network sync"""
-    if not hasattr(context, 'protocol') or not context.protocol:
-        return  # No network connection
-        
-    # Ensure sprite has an ID
-    if not hasattr(sprite, 'sprite_id') or not sprite.sprite_id:
-        sprite.sprite_id = str(__import__('uuid').uuid4())
-
-    # Send sprite movement update with proper protocol format
-    change = {
-        'category': 'sprite',
-        'type': 'sprite_move',
-        'data': {
-            'table_id': context.current_table.table_id,
-            'table_name': context.current_table.name,
-            'sprite_id': sprite.sprite_id,
-            'from': {'x': old_pos[0], 'y': old_pos[1]},
-            'to': {'x': new_pos[0], 'y': new_pos[1]},                
-            'timestamp': __import__('time').time()
-        }
-    }
-    
-    # Send via protocol using SPRITE_UPDATE message type
-    
-    msg = Message(MessageType.SPRITE_UPDATE, change, 
-                getattr(context.protocol, 'client_id', 'unknown'))
-    
-
-    try:
-        # Send the message 
-        context.protocol.send(msg.to_json())
-        logger.debug(f"Sent sprite move: {sprite.sprite_id} to ({new_pos[0]:.1f}, {new_pos[1]:.1f})")
-
-    except Exception as e:
-        logger.error(f"Failed to send sprite movement: {e}")
-
-def sync_sprite_scale(context, sprite, old_scale, new_scale):
-    """Handle sprite scaling with network sync"""
-    if not hasattr(context, 'protocol') or not context.protocol:
-        return
-          # Ensure sprite has an ID
-    if not hasattr(sprite, 'sprite_id') or not sprite.sprite_id:
-        sprite.sprite_id = str(__import__('uuid').uuid4())
-        
-    change = {
-        'category': 'sprite',
-        'type': 'sprite_scale',
-        'data': {
-            'table_id': context.current_table.table_id,
-            'table_name': context.current_table.name,
-            'sprite_id': sprite.sprite_id,
-            'from': {'x': old_scale[0], 'y': old_scale[1]},
-            'to': {'x': new_scale[0], 'y': new_scale[1]},               
-            'timestamp': __import__('time').time()
-        }
-    }
-    
-    
-    msg = Message(MessageType.TABLE_UPDATE, change,
-                 getattr(context.protocol, 'client_id', 'unknown'))
-    
-    try:
-        if hasattr(context.protocol, 'send'):
-            context.protocol.send(msg.to_json())
-        elif hasattr(context.protocol, 'send_message'):
-            context.protocol.send_message(msg)
-            logger.info(f"Sent sprite scale: {sprite.sprite_id} to ({new_scale[0]:.2f}, {new_scale[1]:.2f})")
-        
-    except Exception as e:
-        logger.error(f"Failed to send sprite scaling: {e}")
-
-def sync_sprite_rotation(context, sprite, old_rotation, new_rotation):
-    """Handle sprite rotation with network sync"""
-    if not hasattr(context, 'protocol') or not context.protocol:
-        return
-        
-    # Ensure sprite has an ID
-    if not hasattr(sprite, 'sprite_id') or not sprite.sprite_id:
-        sprite.sprite_id = str(__import__('uuid').uuid4())
-        
-    change = {
-        'category': 'sprite',
-        'type': 'sprite_rotate',
-        'data': {
-            'table_id': context.current_table.table_id,
-            'table_name': context.current_table.name,
-            'sprite_id': sprite.sprite_id,
-            'from': old_rotation,
-            'to': new_rotation,
-            'timestamp': __import__('time').time()
-        }
-    }
-    
-    msg = Message(MessageType.SPRITE_UPDATE, change,
-                 getattr(context.protocol, 'client_id', 'unknown'))
-    
-    try:
-        if hasattr(context.protocol, 'send'):
-            context.protocol.send(msg.to_json())
-        elif hasattr(context.protocol, 'send_message'):
-            context.protocol.send_message(msg)
-        logger.debug(f"Sent sprite rotation: {sprite.sprite_id} to {new_rotation:.1f} degrees")
-        
-    except Exception as e:
-        logger.error(f"Failed to send sprite rotation: {e}")
-
-def check_collision_with_all_sprites(table, sprite):
-    """Check collision of a sprite with all other collidable sprites in the table."""
-    #TODO: make anothet function for checking collision in the same layer
-    for layers in table.dict_of_sprites_list.values():
-        for other_sprite in layers:
-            if other_sprite != sprite and other_sprite != table.selected_sprite and other_sprite.collidable:
-                if sdl3.SDL_HasRectIntersectionFloat(ctypes.byref(sprite.frect), ctypes.byref(other_sprite.frect)):
-                    logger.info(
-                        f"Collision detected: sprite={sprite}, other_sprite={other_sprite}, table={table}"
-                    )
-                    logger.debug(
-                        f"sprite.frect {sprite.frect.x} {sprite.frect.y} {sprite.frect.w} {sprite.frect.h}"
-                    )
-                    logger.debug(
-                        f"other_sprite.frect {other_sprite.frect.x} {other_sprite.frect.y} {other_sprite.frect.w} {other_sprite.frect.h}"
-                    )
-                    return True
-    return False
-
-
-def move_sprites(cnt, delta_time):
-    """Move all sprites, handle collisions and dying sprites."""
-    width = cnt.window_width
-    height = cnt.window_height   
-    # Player managment
-    speed_friction = SPEED_FRICTION # TODO: implement friction
-    acceleration_friction = ACCELERATION_FRICTION
-    cnt.player.physics_step(delta_time, acceleration_friction, speed_friction)
-    for layer, sprite_list in cnt.current_table.dict_of_sprites_list.items():
-        for sprite in sprite_list:
-            # Movement
-            if sprite.moving:
-                sprite.move(delta_time)
-                if sprite.coord_x.value > width.value:
-                    sprite.coord_x.value = 0
-                if sprite.coord_y.value > height.value:
-                    sprite.coord_y.value = 0
-                if sprite.coord_x.value < 0:
-                    sprite.coord_x.value = width.value
-                if sprite.coord_y.value < 0:
-                    sprite.coord_y.value = height.value
-                if sprite.collidable:
-                    if check_collision_with_all_sprites(cnt.current_table, sprite):
-                        logger.info("Collision occurred, changing sprite texture and stopping movement.")
-                        sprite.set_texture(b'resources/fire_explosion.png')
-                        sprite.moving = False
-                        sprite.collidable = False
-                        sprite.set_die_timer(TIME_TO_DIE)
-            # Handle dying sprites
-            if sprite.die_timer is not None:
-                sprite.die_timer -= delta_time
-                if sprite.die_timer <= 0:
-                    sprite.die()
-                    cnt.current_table.dict_of_sprites_list[sprite.layer].remove(sprite)
-            
-            # Convert sprite's table coordinates to screen coordinates for rendering
-            if hasattr(cnt.current_table, 'table_to_screen'):
-                # Use new coordinate system
-                screen_x, screen_y = cnt.current_table.table_to_screen(sprite.coord_x.value, sprite.coord_y.value)
-                sprite.frect.x = ctypes.c_float(screen_x)
-                sprite.frect.y = ctypes.c_float(screen_y)                
-                # Scale sprites based on table scale
-                sprite.frect.w = ctypes.c_float(sprite.original_w * sprite.scale_x * cnt.current_table.table_scale)
-                sprite.frect.h = ctypes.c_float(sprite.original_h * sprite.scale_y * cnt.current_table.table_scale)
-            
-            cnt.step.value = max(float(sprite.frect.w), float(sprite.frect.h))
-
+        # measure time print(f'time for collision check: {time.time() - start:.6f} seconds')
