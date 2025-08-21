@@ -69,6 +69,7 @@ def handle_event(cnt, event):
 def update_player_acceleration(cnt):
     """Update player acceleration based on currently pressed keys."""
     # Define key mappings
+    #print(f'pressed keys: {cnt.pressed_keys}')
     up_keys = {sdl3.SDL_SCANCODE_W, sdl3.SDL_SCANCODE_UP}
     down_keys = {sdl3.SDL_SCANCODE_S, sdl3.SDL_SCANCODE_DOWN}
     left_keys = {sdl3.SDL_SCANCODE_A, sdl3.SDL_SCANCODE_LEFT}
@@ -86,6 +87,7 @@ def update_player_acceleration(cnt):
         ax -= 1
     if cnt.pressed_keys & right_keys:
         ax += 1
+    #print(f'player name: {cnt.player.name} acceleration {cnt.player.acceleration_x}, {cnt.player.acceleration_y}, speed {cnt.player.speed_x}, {cnt.player.speed_y}')
     cnt.player.set_acceleration(ax, ay)
     if ESC in cnt.pressed_keys:
         cnt.debug_mode = not cnt.debug_mode
