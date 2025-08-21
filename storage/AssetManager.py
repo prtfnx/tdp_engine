@@ -17,7 +17,7 @@ from core.Sprite import Sprite
 from storage.StorageManager import StorageManager
 from net.DownloadManager import DownloadManager  
 
-logger = setup_logger(__name__)
+logger = setup_logger(__name__, level='WARNING')
 
 class ClientAssetManager:
     """Manages R2 assets on the client side with local caching"""
