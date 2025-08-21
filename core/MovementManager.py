@@ -40,7 +40,7 @@ class MovementManager:
             self.context.RenderManager.aabb_rectangles.append((min_x, min_y, max_x, max_y))
         return min_x, min_y, max_x, max_y
 
-    def move_and_collide(self, delta_time):
+    def move_and_collide(self, delta_time, table):
         # Debug: print all sprite frect values before collision check
         # print('--- Sprite frect values before collision check ---')
         # for layer, sprite_list in self.table.dict_of_sprites_list.items():
@@ -48,10 +48,13 @@ class MovementManager:
         #         print(f'Layer: {layer}, Sprite: {sprite}, frect: x={sprite.frect.x}, y={sprite.frect.y}, w={sprite.frect.w}, h={sprite.frect.h}, collidable={sprite.collidable}')
         #start = time.time()
         # Player management
+        self.table=table
+        self.player = table.player
         player_last_coord = [self.player.coord_x.value, self.player.coord_y.value]
         speed_friction = SPEED_FRICTION # TODO: implement friction
         acceleration_friction = ACCELERATION_FRICTION
         self.player.physics_step(delta_time, acceleration_friction, speed_friction)
+        #print(f'player name: {self.player.name} speed {self.player.speed_x}, {self.player.speed_y}, acceleration {self.player.acceleration_x}, {self.player.acceleration_y}')
         # Move all sprites
         for layer, sprite_list in self.table.dict_of_sprites_list.items():
             for sprite in sprite_list:
