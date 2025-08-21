@@ -584,7 +584,7 @@ class GuiActionsBridge:
                     render_manager = self.context.RenderManager
                     # Hide most layers except tokens, light, and fog_of_war
                     for layer_name in self.get_available_layers():
-                        if layer_name in ['tokens', 'light', 'fog_of_war']:
+                        if layer_name in ['tokens', 'light','projectiles', 'fog_of_war']:
                             render_manager.set_layer_visibility(layer_name, True)
                         else:
                             render_manager.set_layer_visibility(layer_name, False)
