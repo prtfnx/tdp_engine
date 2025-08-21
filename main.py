@@ -270,6 +270,7 @@ def SDL_AppInit_func() -> Context:
     try:
         logger.info("Initializing MovementManager...")
         game_context.MovementManager = MovementManager(game_context.current_table, game_context.player)
+        game_context.MovementManager.context = game_context
     except Exception as e:
         logger.error(f"Failed to initialize MovementManager: {e}")
         game_context.MovementManager = None
