@@ -75,8 +75,10 @@ def handle_clipboard_copy(context):
                 'moving': getattr(selected_sprite, 'moving', False),
                 'speed': getattr(selected_sprite, 'speed', None),
                 'collidable': getattr(selected_sprite, 'collidable', False),
-                'frect_w': selected_sprite.frect.w if hasattr(selected_sprite, 'frect') else 0,
-                'frect_h': selected_sprite.frect.h if hasattr(selected_sprite, 'frect') else 0,
+                'frect_w': selected_sprite.original_w if hasattr(selected_sprite, 'frect') else 0,
+                'frect_h': selected_sprite.original_h if hasattr(selected_sprite, 'frect') else 0,
+                'scale_x': selected_sprite.scale_x if hasattr(selected_sprite, 'scale_x') else 1.0,
+                'scale_y': selected_sprite.scale_y if hasattr(selected_sprite, 'scale_y') else 1.0
             }
         elif isinstance(selected_sprite, AnimatedSprite):
             _copied_sprite_data = {
@@ -88,8 +90,10 @@ def handle_clipboard_copy(context):
                 'moving': getattr(selected_sprite, 'moving', False),
                 'speed': getattr(selected_sprite, 'speed', None),
                 'collidable': getattr(selected_sprite, 'collidable', False),               
-                'frect_w': selected_sprite.frect.w if hasattr(selected_sprite, 'frect') else 0,
-                'frect_h': selected_sprite.frect.h if hasattr(selected_sprite, 'frect') else 0,
+                'frect_w': selected_sprite.original_w if hasattr(selected_sprite, 'frect') else 0,
+                'frect_h': selected_sprite.original_h if hasattr(selected_sprite, 'frect') else 0,
+                'scale_x': selected_sprite.scale_x if hasattr(selected_sprite, 'scale_x') else 1.0,
+                'scale_y': selected_sprite.scale_y if hasattr(selected_sprite, 'scale_y') else 1.0,
                 'sheet_path': selected_sprite.sheet_path if hasattr(selected_sprite, 'sheet_path') else None,
                 'frame_rects': selected_sprite.frame_rects if hasattr(selected_sprite, 'frame_rects') else None,
                 'frame_duration': selected_sprite.frame_duration if hasattr(selected_sprite, 'frame_duration') else None,
