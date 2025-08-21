@@ -163,8 +163,9 @@ class RenderManager():
             return
         
         # Render sprites in the layer (with animation support)
-        
-        for sprite in layer:           
+
+        for sprite in layer:
+           
             if sprite.visible == True:
                 # Animation support: if sprite has frames, animate
                 if isinstance(sprite, AnimatedSprite):
@@ -495,8 +496,7 @@ class RenderManager():
                            ctypes.c_float(x), ctypes.c_float(y + radius))
 
     def iterate_draw(self, table, light_on: bool = True, context=None):
-        """Manage all rendering operations for a table for the current frame"""
-        
+        """Manage all rendering operations for a table for the current frame"""        
         renderer = self.renderer               
         if not table or not table.screen_area:
             raise ValueError("Table and its screen area cannot be None")       
