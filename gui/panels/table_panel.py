@@ -466,6 +466,8 @@ class TablePanel:
             
             # Update context
             self.context.current_table = table
+            if hasattr(self.context, 'player') and hasattr(self.context.current_table, 'player'):
+                    self.context.player = self.context.current_table.player
             
             # Invalidate table cache since current table changed
             self._cached_table = None
