@@ -14,7 +14,7 @@ class ContextTable:
         self.name = table_name  # Legacy compatibility
         self.width = width
         self.height = height
-        self.layers = ['map','tokens', 'dungeon_master', 'light', 'height', 'obstacles', 'fog_of_war']
+        self.layers = ['map','tokens', 'dungeon_master','projectiles','light', 'height', 'obstacles', 'fog_of_war']
         self.dict_of_sprites_list = {layer: [] for layer in self.layers}
         
         # Fog of war rectangles storage
