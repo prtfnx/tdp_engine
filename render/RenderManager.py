@@ -70,7 +70,7 @@ class RenderManager():
     def configure_layers(self, basic_settings: LayerSettings = LayerSettings(), order: Optional[List[str]] = None):
         """Configure default settings for all layers with proper z_order"""
         # Default layer order: ['map','tokens', 'dungeon_master', 'light', 'height', 'obstacles', 'fog_of_war']
-        default_layer_order = ['map', 'tokens', 'dungeon_master', 'light', 'height', 'obstacles', 'fog_of_war']
+        default_layer_order = ['map', 'tokens', 'dungeon_master','projectiles', 'light', 'height', 'obstacles', 'fog_of_war']
         layer_order = order if order else default_layer_order
         for layer_name in self.dict_of_sprites_list.keys():
             # Create a copy of basic_settings for each layer
@@ -513,7 +513,7 @@ class RenderManager():
         else:
             #logger.info("no light")
             selected_layer = context.selected_layer if context else None
-            self.render_all_layers(selected_layer, context)
+            self.render_all_layers(selected_layer, context)        
         self.draw_margin(table.selected_sprite)  # Draw margin around selected sprite if any
         
         # Render measurement tool overlay if active
