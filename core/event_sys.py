@@ -469,11 +469,14 @@ def handle_mouse_button_down(cnt, event):
         
         # Check if we clicked on any sprite (only on the selected layer)
         clicked_on_sprite = False
-        if cnt.current_table and hasattr(cnt, 'selected_layer'):
+        if cnt.current_table and hasattr(cnt, 'selected_layer'):            
             # Only check sprites on the currently selected layer
             selected_layer = getattr(cnt, 'selected_layer', 'tokens')
+            print('selected layer:', selected_layer, )
             if selected_layer in cnt.current_table.dict_of_sprites_list:
+                print('table:', cnt.current_table.table_name, )
                 sprites = cnt.current_table.dict_of_sprites_list[selected_layer]
+                print('sprites:', [sprite.sprite_id for sprite in sprites])
                 for sprite in sprites:
                     if sdl3.SDL_PointInRectFloat(ctypes.byref(point), ctypes.byref(sprite.frect)):
                         # Select sprite but don't start grabbing yet
