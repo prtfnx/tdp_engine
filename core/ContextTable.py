@@ -1,7 +1,6 @@
 import uuid
 from core.Sprite import Sprite
 from tools.logger import setup_logger
-
 logger = setup_logger(__name__)
 
 CELL_SIDE: int = 20
@@ -38,7 +37,7 @@ class ContextTable:
         # Legacy properties for backward compatibility
         self.x_moved= 1.0        
         self.y_moved= 1.0
-        
+        #
         self.show_grid = True
         self.cell_side = CELL_SIDE
 
@@ -158,6 +157,7 @@ class ContextTable:
             'y_moved': self.y_moved,
             'show_grid': self.show_grid,
             'cell_side': self.cell_side,
+            'player': self.player.to_dict() if hasattr(self, 'player') else None,
             'layers': {layer: [sprite.to_dict() for sprite in sprites] 
                        for layer, sprites in self.dict_of_sprites_list.items()}        
         }
