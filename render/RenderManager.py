@@ -1,3 +1,4 @@
+
 import sdl3
 import ctypes
 import logging
@@ -47,6 +48,8 @@ class RenderManager():
         self.fog_texture_size: Optional[Tuple[int, int]] = None
         self._cached_fog_rectangles: Optional[Tuple] = None
         self._cached_viewport_state: Optional[Tuple[float, float, float]] = None
+        # For debugging
+        self.aabb_rectangles: list= []
 
     def _apply_layer_settings(self):
         sdl3.SDL_SetRenderDrawColor(self.renderer, 
@@ -161,7 +164,7 @@ class RenderManager():
         
         # Render sprites in the layer (with animation support)
         
-        for sprite in layer:
+        for sprite in layer:           
             if sprite.visible == True:
                 # Animation support: if sprite has frames, animate
                 if isinstance(sprite, AnimatedSprite):
@@ -401,6 +404,32 @@ class RenderManager():
         # Draw rotation handle as a circle above the sprite
         self._draw_rotation_handle(sprite)
     
+    def draw_aabb_margin(self, table):
+        """Draw a rectangle for the given AABB (min_x, min_y, max_x, max_y) in table coordinates."""
+        color: tuple = (255, 0, 0, 255)
+       
+        for aabb in self.aabb_rectangles:
+            aabb = self.aabb_rectangles.pop()
+            min_x, min_y, max_x, max_y = aabb
+            # Convert AABB corners to screen coordinates
+            screen_min_x, screen_min_y = table.table_to_screen(min_x, min_y)
+            screen_max_x, screen_max_y = table.table_to_screen(max_x, max_y)
+            # Build SDL_FRect for margin
+            rect = sdl3.SDL_FRect()
+            rect.x = ctypes.c_float(screen_min_x)
+            rect.y = ctypes.c_float(screen_min_y)
+            rect.w = ctypes.c_float(screen_max_x - screen_min_x)
+            rect.h = ctypes.c_float(screen_max_y - screen_min_y)
+            # Set color and draw
+            
+            sdl3.SDL_SetRenderDrawColor(self.renderer,
+                                    ctypes.c_ubyte(color[0]),
+                                    ctypes.c_ubyte(color[1]),
+                                    ctypes.c_ubyte(color[2]),
+                                    ctypes.c_ubyte(color[3]))
+            sdl3.SDL_RenderRect(self.renderer, ctypes.byref(rect))
+        self.aabb_rectangles.clear()
+
     def _draw_rotation_handle(self, sprite: Sprite):
         """Draw a circular rotation handle at the margin of the selected rectangle"""
         if not sprite:
@@ -514,7 +543,7 @@ class RenderManager():
             #logger.info("no light")
             selected_layer = context.selected_layer if context else None
             self.render_all_layers(selected_layer, context)        
-        self.draw_margin(table.selected_sprite)  # Draw margin around selected sprite if any
+        
         
         # Render measurement tool overlay if active
         # Check for measurement tool in the provided context first, then table.context
@@ -540,6 +569,11 @@ class RenderManager():
             
         if fog_of_war_tool and fog_of_war_tool.active:
             fog_of_war_tool.render(self.renderer)
+        # debugging              
+        if  context.debug_mode or context.is_gm:
+            
+            self.draw_aabb_margin(table)
+            self.draw_margin(table.selected_sprite)  # Draw margin around selected sprite if any
 
     def render_fog_layer_texture(self, hide_rectangles: List[Tuple[Tuple[float, float], Tuple[float, float]]], 
                                 reveal_rectangles: List[Tuple[Tuple[float, float], Tuple[float, float]]],
