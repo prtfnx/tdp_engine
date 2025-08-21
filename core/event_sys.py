@@ -6,7 +6,6 @@ import math
 import core.clipboard_sys as clipboard_sys
 import core.dragdrop_sys as dragdrop_sys
 import render.PaintManager as PaintManager
-from core.MovementManager import sync_sprite_move
 from tools.logger import setup_logger
 from core.actions_protocol import Position
 logger = setup_logger(__name__)
@@ -76,13 +75,13 @@ def handle_mouse_motion(cnt, event):
                 dy = abs(new_pos[1] - sprite._last_network_y)
                   
             # Only send if moved more than threshold (reduce network spam)
-                if dx > DIFF_POSITION or dy > DIFF_POSITION:                    # sync_sprite_move moved to MovementManager
+                # if dx > DIFF_POSITION or dy > DIFF_POSITION:                    # sync_sprite_move moved to MovementManager
                     
-                    #print(f"cnt.network_context.sync_sprite_move: {cnt.network_context.sync_sprite_move} ")
-                    sync_sprite_move(cnt, sprite, old_pos, new_pos)
+                #     #print(f"cnt.network_context.sync_sprite_move: {cnt.network_context.sync_sprite_move} ")
+                #     sync_sprite_move(cnt, sprite, old_pos, new_pos)
                     
-                    sprite._last_network_x = new_pos[0]            
-                    sprite._last_network_y = new_pos[1]
+                #     sprite._last_network_x = new_pos[0]            
+                #     sprite._last_network_y = new_pos[1]
             
             logger.debug(f"Grabing sprite at {sprite.coord_x.value}, {sprite.coord_y.value}")
             
@@ -314,13 +313,13 @@ def handle_rotate_end(cnt, sprite):
             logger.error(f"Failed to send rotation to server: {result.message}")
         
         # Also sync via MovementManager for network consistency
-        try:
-            from MovementManager import sync_sprite_rotation
-            sync_sprite_rotation(cnt, sprite, old_rotation, new_rotation)
-        except ImportError:
-            logger.warning("MovementManager not available for rotation sync")
-        except Exception as e:
-            logger.error(f"Error syncing rotation via MovementManager: {e}")
+        # try:
+        #     from MovementManager import sync_sprite_rotation
+        #     sync_sprite_rotation(cnt, sprite, old_rotation, new_rotation)
+        # except ImportError:
+        #     logger.warning("MovementManager not available for rotation sync")
+        # except Exception as e:
+        #     logger.error(f"Error syncing rotation via MovementManager: {e}")
     
     cnt.rotating = False
     logger.debug(f"Rotation ended for sprite at angle {getattr(sprite, 'rotation', 0.0)}")
@@ -607,7 +606,7 @@ def handle_mouse_button_up(cnt, event):
                       getattr(sprite, '_last_network_y', final_pos[1]))
             
             
-            sync_sprite_move(cnt, sprite, old_pos, final_pos)
+            #sync_sprite_move(cnt, sprite, old_pos, final_pos)
             
             # Update last network position
             sprite._last_network_x = final_pos[0]
@@ -662,8 +661,8 @@ def handle_resize_end(cnt, sprite):
         new_scale = (sprite.scale_x, sprite.scale_y)
         old_scale = (getattr(sprite, '_resize_start_scale_x', new_scale[0]),
                     getattr(sprite, '_resize_start_scale_y', new_scale[1]))
-        from MovementManager import sync_sprite_scale
-        sync_sprite_scale(cnt, sprite, old_scale, new_scale)
+        # from MovementManager import sync_sprite_scale
+        # sync_sprite_scale(cnt, sprite, old_scale, new_scale)
         
 def handle_key_event(cnt, key_code):
     match key_code:
@@ -682,6 +681,7 @@ def handle_key_event(cnt, key_code):
                     logger.info("Nothing to paste from clipboard")
             except Exception as e:
                 logger.error(f"Error during clipboard paste: {e}")
+                raise e
         case sdl3.SDL_SCANCODE_C:  # Copy
             logger.info("C key pressed - attempting to copy selected sprite")
             try:
@@ -723,7 +723,7 @@ def handle_key_event(cnt, key_code):
                       getattr(sprite, '_last_network_y', final_pos[1]))
             
             
-            sync_sprite_move(cnt, sprite, old_pos, final_pos)
+            # sync_sprite_move(cnt, sprite, old_pos, final_pos)
             
             # Update last network position
             sprite._last_network_x = final_pos[0]
