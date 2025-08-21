@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Optional, List, Dict, Any, Union, Callable
 from concurrent.futures import ThreadPoolExecutor
 from tools.logger import setup_logger
-
+from tools.utils import bytes_to_str
 logger = setup_logger(__name__, level='WARNING')
 
 class StorageManager:
@@ -28,12 +28,12 @@ class StorageManager:
                        subdir: str = "") -> str:
         """Save file asynchronously. Returns operation ID."""
         operation_id = str(uuid.uuid4())[:8]
-        
+        data = bytes_to_str(data)
         def _save():
             try:
                 file_path = self.root_path / subdir / filename
-                file_path.parent.mkdir(parents=True, exist_ok=True)
-                if isinstance(data, dict):
+                file_path.parent.mkdir(parents=True, exist_ok=True)                
+                if isinstance(data, dict):                    
                     with open(file_path, 'w', encoding='utf-8') as f:
                         json.dump(data, f, indent=2)
                 elif isinstance(data, str):
