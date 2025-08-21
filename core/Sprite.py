@@ -5,6 +5,7 @@ import sdl3
 import uuid
 import time
 import json
+import re
 
 # Import types for type checking
 if TYPE_CHECKING:     
@@ -35,7 +36,8 @@ class Sprite:
                  die_timer: Optional[float] = None,
                  asset_id: Optional[str] = None, 
                  context: Optional['Context'] = None,
-                 visible: bool = True) -> None:
+                 visible: bool = True,
+                 rotation: float = 0.0) -> None:
         # Initialize all ctypes structures properly
         self.coord_x: ctypes.c_float = ctypes.c_float(coord_x)  
         self.coord_y: ctypes.c_float = ctypes.c_float(coord_y)  
@@ -58,7 +60,7 @@ class Sprite:
         self.collidable: bool = collidable
         self.layer: str = layer
         self.texture: Optional[sdl3.SDL_Texture] = None
-        self.rotation: float = 0.0
+        self.rotation: float = rotation
         self.visible: bool = visible  # Visibility flag
           # Compendium entity support
         self.compendium_entity: Optional[Any] = compendium_entity
@@ -108,6 +110,10 @@ class Sprite:
         if self.moving:
             self.coord_x.value += self.dx * delta_time
             self.coord_y.value += self.dy * delta_time
+            # Apply speed friction
+            if self.speed_friction:
+                self.dx *= self.speed_friction            
+                self.dy *= self.speed_friction
 
     def set_die_timer(self, time: float) -> None:
         self.die_timer = time
@@ -250,16 +256,15 @@ class AnimatedSprite(Sprite):
         with open(self.atlas_path, 'r') as f:
             atlas = json.load(f)
         frames = atlas['frames']
-        frame_frects = []
-        print(f'Loaded atlas: {self.atlas_path} frames are {frames}')
-        import re
+        frame_frects = []      
+      
         def frame_sort_key(key):
-            match = re.search(r'_(\d+)\.png$', key)
+            match = re.search(r'(\d+)\.png$', key)
             return int(match.group(1)) if match else 0
 
         for key in sorted(frames.keys(), key=frame_sort_key):
             frame = frames[key]['frame']
-            print(f'Loaded frame: {key} - {frame}')
+            print(f"Loading frame {key}: {frame}")
             frect = sdl3.SDL_FRect()
             frect.x = frame['x']
             frect.y = frame['y']
@@ -277,7 +282,7 @@ class AnimatedSprite(Sprite):
             self.current_frame = (self.current_frame + 1) % len(self.frame_frects)
             self.last_frame_time = now
 
-    def reload_texture(self, texture: Any, w: int, h: int) -> bool:  # texture: SDL_Texture
+    def reload_texture(self, texture: Any, w: int, h: int):  # texture: SDL_Texture
         """Reload texture for animated sprite"""     
         old_texture = self.texture        
         self.texture = texture
@@ -285,8 +290,7 @@ class AnimatedSprite(Sprite):
             try:
                 sdl3.SDL_DestroyTexture(old_texture)
             except Exception as e:
-                logger.error(f"Error destroying old texture: {e}")
-        print(f'Reloading texture for animated sprite: {self.sprite_id}, {self.frame_frects[0].w}, {self.frame_frects[0].h}')
+                logger.error(f"Error destroying old texture: {e}")        
 
         w = int(self.frame_frects[0].w)
         h = int(self.frame_frects[0].h)

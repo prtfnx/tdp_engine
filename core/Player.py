@@ -159,7 +159,8 @@ class Player():
         """Update player sprite based on current state."""    
         sprite_foots_run = self.sprite_dict["sprite_foots_run"]
         sprite_foots_run.rotation = self.weapon_angle
-        if self.speed_x > 0.1 or self.speed_y > 0.1:            
+
+        if abs(self.speed_x) > 0.1 or abs(self.speed_y) > 0.1:            
             # Center foots_run on self.sprite           
             offset_x = (self.sprite.frect.w - sprite_foots_run.frect.w) / 2
             offset_y = (self.sprite.frect.h - sprite_foots_run.frect.h) / 2
@@ -175,7 +176,7 @@ class Player():
         """Update player state based on current conditions."""
         current_time = sdl3.SDL_GetTicks() / 1000.0  # Get current time in seconds
         if self.state == PlayerState.SHOOTING and current_time-self.last_shoot_time > 0.3:
-            if self.speed == 0:
+            if abs(self.speed_x) < 0.1 or abs(self.speed_y) < 0.1:
                 logger.debug("Player is idle after shooting, updating state to IDLE.")
                 self.update_state(PlayerState.IDLE)
             else:
@@ -247,18 +248,21 @@ class Player():
                 sprite_id=uuid.uuid4().hex,
                 position=bullet_position,
                 image_path=bullet_sprite_path,
-                frame_duration=1,
-                scale_x=1.5,
-                scale_y=1.5,
+                frame_duration=142,
+                scale_x=2,
+                scale_y=2,
+                rotation=self.weapon_angle+90,
                 moving=True,
-                speed=1.5,
+                speed=3,
                 collidable=True,
-                atlas_path=bullet_atlas_path,
-                die_timer=2
+                layer='projectiles',
+                atlas_path=bullet_atlas_path,                              
         )        
         sprite = result.data['sprite']
         sprite.set_position(self.coord_x.value, self.coord_y.value)
-        
+        sprite.speed_friction = 0.999  # Apply friction
+        sprite.is_player = True
+        sprite.set_die_timer(1000)
         # Calculate direction using table coordinates
         dx = target_table_x - self.coord_x.value
         dy = target_table_y - self.coord_y.value
