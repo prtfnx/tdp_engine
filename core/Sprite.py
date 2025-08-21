@@ -37,7 +37,8 @@ class Sprite:
                  asset_id: Optional[str] = None, 
                  context: Optional['Context'] = None,
                  visible: bool = True,
-                 rotation: float = 0.0) -> None:
+                 rotation: float = 0.0,
+                 is_player: bool = False) -> None:
         # Initialize all ctypes structures properly
         self.coord_x: ctypes.c_float = ctypes.c_float(coord_x)  
         self.coord_y: ctypes.c_float = ctypes.c_float(coord_y)  
@@ -75,7 +76,7 @@ class Sprite:
             self.name: Optional[str] = compendium_entity.name
         else:
             self.name: Optional[str] = None
-        
+        self.is_player: bool = is_player  # Default to not a player sprite
         # Initialize movement properties
         self.dx: float = 0.0
         self.dy: float = 0.0
@@ -177,7 +178,7 @@ class Sprite:
         """Clean up sprite resources"""
         try:
             if hasattr(self, 'texture') and self.texture:
-                sdl3.SDL_DestroyTexture(self.texture)
+                #sdl3.SDL_DestroyTexture(self.texture)# we cache textures
                 self.texture = None
                 logger.debug(f"Cleaned up texture for sprite: {self.texture_path}")
         except Exception as e:
@@ -216,6 +217,8 @@ class Sprite:
             'coord_y': self.coord_y.value,
             'scale_x': self.scale_x,
             'scale_y': self.scale_y,
+            'frect_w': self.original_w,
+            'frect_h': self.original_h,
             'character': self.character,
             'moving': self.moving,
             'speed': self.speed,
@@ -223,7 +226,13 @@ class Sprite:
             'layer': self.layer,
             'compendium_entity': self.compendium_entity.to_dict() if self.compendium_entity else None,
             'entity_type': self.entity_type,
-            'asset_id': self.asset_id
+            'asset_id': self.asset_id,
+            'visibility': self.visible,
+            'rotation': self.rotation,
+            'die_timer': self.die_timer,
+            'asset_id': self.asset_id,
+            'is_player': self.is_player,
+            'visible': self.visible
         }
 
 class AnimatedSprite(Sprite):
@@ -237,8 +246,9 @@ class AnimatedSprite(Sprite):
                  scale_x: float = 1,
                  scale_y: float = 1,
                  atlas_path: str = None,
+                 is_player: bool = False,
                  **kwargs) -> None:
-        super().__init__(renderer, sheet_path, scale_x=scale_x, scale_y=scale_y, **kwargs)
+        super().__init__(renderer, sheet_path, scale_x=scale_x, scale_y=scale_y, is_player=is_player, **kwargs)
         self.sheet_path = sheet_path
         self.frame_rects = frame_rects  # List of rectangles for each frame
         self.frame_duration = frame_duration
@@ -303,7 +313,39 @@ class AnimatedSprite(Sprite):
             self.original_h = float(h)
         return True
 
-        
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert animated sprite to dictionary representation"""
+        return {
+            'sprite_id': self.sprite_id,
+            'texture_path': self.texture_path.decode('utf-8'),
+            'coord_x': self.coord_x.value,
+            'coord_y': self.coord_y.value,
+            'scale_x': self.scale_x,
+            'scale_y': self.scale_y,
+            'frect_w': self.original_w,
+            'frect_h': self.original_h,
+            'character': self.character,
+            'moving': self.moving,
+            'speed': self.speed,
+            'collidable': self.collidable,
+            'layer': self.layer,
+            'compendium_entity': self.compendium_entity.to_dict() if self.compendium_entity else None,
+            'entity_type': self.entity_type,
+            'asset_id': self.asset_id,
+            'visibility': self.visible,
+            'rotation': self.rotation,
+            'die_timer': self.die_timer,
+            'asset_id': self.asset_id,
+            'sheet_path': self.sheet_path,
+            'frame_rects': self.frame_rects,
+            'frame_duration': self.frame_duration,
+            'current_frame': self.current_frame,
+            'last_frame_time': self.last_frame_time,
+            'sheet_texture': self.sheet_texture,
+            'atlas_path': self.atlas_path,
+            'is_player': self.is_player,
+            'visible': self.visible
+        }
 
     def get_current_frame_frect(self):
         return self.frame_frects[self.current_frame]
