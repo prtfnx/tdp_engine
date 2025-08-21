@@ -48,6 +48,7 @@ class Context:
         # Player mode
         self.is_gm: bool = False
         self.player: Optional[Player] = None
+        self.debug_mode: bool = False
         # Sprite management
         self.step: c_float = c_float(1)
         self.sprites_list: List[Sprite] = []
