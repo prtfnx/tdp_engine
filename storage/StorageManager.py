@@ -11,7 +11,7 @@ from typing import Optional, List, Dict, Any, Union, Callable
 from concurrent.futures import ThreadPoolExecutor
 from tools.logger import setup_logger
 
-logger = setup_logger(__name__)
+logger = setup_logger(__name__, level='WARNING')
 
 class StorageManager:
     """Non-blocking storage manager for SDL apps using thread pool."""
