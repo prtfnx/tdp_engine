@@ -28,7 +28,7 @@ else:
     SDL_GLContext = Any
 
 
-logger = setup_logger(__name__)
+logger = setup_logger(__name__, level='WARNING')
 
 CELL_SIDE: int = 20
 MIN_SCALE: float = 0.1
@@ -227,7 +227,7 @@ class Context:
     def add_animated_sprite(self, texture_path, atlas_path, scale_x=1, scale_y=1, layer='tokens',
                    character=None, moving=False, speed=None,
                    collidable=False, table=None, coord_x=0.0, coord_y=0.0,sprite_id=None,table_id=None,visible=True,
-                   frame_duration=100, **kwargs):
+                   frame_duration=100, rotation=0.0, **kwargs):
         """Add a sprite to the specified layer in the current table"""
         #TODO refactor to use sprite data dict to unify sprite creation
         
@@ -274,7 +274,8 @@ class Context:
                 context=self,
                 visible=visible,
                 atlas_path=atlas_path,
-                frame_duration = frame_duration
+                frame_duration=frame_duration,
+                rotation=rotation
             )
             
             # Check if sprite creation was successful

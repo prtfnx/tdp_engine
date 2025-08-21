@@ -579,7 +579,7 @@ class Actions(ActionsProtocol):
     
     def create_animated_sprite(self, table_id: str, sprite_id: str, position: Position , 
                      image_path: str, atlas_path:str, layer: str = "tokens", to_server: bool = False, frame_duration=100,
-                      **kwargs) -> ActionResult:
+                      rotation=0.0, **kwargs) -> ActionResult:
         """Create a new animated sprite on a table"""
         #TODO refactor to use sprite data dict
         if not isinstance(position, Position):
@@ -601,6 +601,7 @@ class Actions(ActionsProtocol):
                 'sprite_id': sprite_id,
                 'atlas_path': atlas_path,
                 'frame_duration': frame_duration,
+                'rotation': rotation,
                 **kwargs
             }
             logger.debug(f"Creating sprite with data: {sprite_data}")
