@@ -44,7 +44,8 @@ if TYPE_CHECKING:
        
 
 logger = setup_logger(__name__)
-MUSIC: bool = True
+LOAD_LEVEL: bool = True
+MUSIC: bool = False
 PLAYER_MODE: bool = False
 BASE_WIDTH: int = 1920
 BASE_HEIGHT:  int = 1080
@@ -220,7 +221,8 @@ def SDL_AppInit_func() -> Context:
         logger.info("Paint system initialized.")
     except Exception as e:
         logger.error(f"Failed to initialize paint system: {e}")   
-    # Initialize Table
+    # Initialize Table    
+    
     test_table = game_context.add_table("test_table", BASE_WIDTH, BASE_HEIGHT)  
     if test_table:           
         result1=game_context.Actions.create_sprite( test_table.table_id, "sprite_map", Position(0, 0), image_path="map.jpg", scale_x=0.5, scale_y=0.5, layer='map')
@@ -230,10 +232,10 @@ def SDL_AppInit_func() -> Context:
         result5=game_context.Actions.create_sprite( test_table.table_id, "sprite_wall", Position(300, 300), image_path="wall1.png", scale_x=0.1, scale_y=0.1, collidable=True, layer='obstacles')
         logger.info(f"Created sprites: {result1}, {result2}, {result3}, {result4}, {result5}")
         # add player        
-        result9=game_context.Actions.create_animated_sprite(test_table.table_id, "sprite_foots_run", Position(0, 0), image_path="soldier/foots/run.png", atlas_path="resources/soldier/foots/run.json", scale_x=0.5, scale_y=0.5, collidable=False, visible=False, frame_duration=30)
-        result6=game_context.Actions.create_animated_sprite(test_table.table_id, "sprite_player_idle", Position(0, 0), image_path="soldier/handgun/idle.png", atlas_path="resources/soldier/handgun/idle.json", scale_x=0.5, scale_y=0.5, collidable=False )
-        result7=game_context.Actions.create_animated_sprite(test_table.table_id, "sprite_player_move", Position(0, 0), image_path="soldier/handgun/move.png", atlas_path="resources/soldier/handgun/move.json", scale_x=0.5, scale_y=0.5, collidable=False, visible=False) 
-        result8=game_context.Actions.create_animated_sprite(test_table.table_id, "sprite_player_shoot", Position(0, 0), image_path="soldier/handgun/shoot.png", atlas_path="resources/soldier/handgun/shoot.json", scale_x=0.5, scale_y=0.5, collidable=False, visible=False, frame_duration=100)
+        result9=game_context.Actions.create_animated_sprite(test_table.table_id, "sprite_foots_run", Position(0, 0), image_path="soldier/foots/run.png", atlas_path="resources/soldier/foots/run.json", scale_x=0.5, scale_y=0.5, collidable=False, visible=False, frame_duration=30, is_player=True)
+        result6=game_context.Actions.create_animated_sprite(test_table.table_id, "sprite_player_idle", Position(0, 0), image_path="soldier/handgun/idle.png", atlas_path="resources/soldier/handgun/idle.json", scale_x=0.5, scale_y=0.5, collidable=False,is_player=True, visible=True, frame_duration=100)
+        result7=game_context.Actions.create_animated_sprite(test_table.table_id, "sprite_player_move", Position(0, 0), image_path="soldier/handgun/move.png", atlas_path="resources/soldier/handgun/move.json", scale_x=0.5, scale_y=0.5, collidable=False, visible=False, frame_duration=100, is_player=True)
+        result8=game_context.Actions.create_animated_sprite(test_table.table_id, "sprite_player_shoot", Position(0, 0), image_path="soldier/handgun/shoot.png", atlas_path="resources/soldier/handgun/shoot.json", scale_x=0.5, scale_y=0.5, collidable=False, visible=False, frame_duration=100, is_player=True)
 
         if result6.success and result6.data:
             game_context.player.sprite = result6.data['sprite']
@@ -303,7 +305,7 @@ def SDL_AppIterate(context):
         table.set_screen_area(table_x, table_y, table_width, table_height)
 
     # Movement
-    context.MovementManager.move_and_collide(delta_time)
+    context.MovementManager.move_and_collide(delta_time, table)
     # Render all sdl content
     context.RenderManager.iterate_draw(table, context.light_on, context)
     # Render paint system if active (in table area)
@@ -334,7 +336,8 @@ def main():
         sys.exit(1)       
     running = True
     event = sdl3.SDL_Event() 
-    
+    if LOAD_LEVEL:
+        context.Actions.load_table(path_to_table="tables/table_session.json")
     while running:
         # Handle events
         while sdl3.SDL_PollEvent(event):          
