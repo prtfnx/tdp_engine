@@ -273,7 +273,7 @@ class Actions(ActionsProtocol):
                     return ActionResult(False, f"Missing required field: {field}")
                     
             # Create table using Context method
-            table = self.context.create_table_from_dict(table_dict)
+            table = self.context.create_table_from_dict(table_dict)            
             if not table:
                 return ActionResult(False, f"Failed to create table {table_dict['table_name']}")          
 
@@ -318,7 +318,7 @@ class Actions(ActionsProtocol):
                 print(f"Key: {key}, Value: {value}")
             
             
-            self.AssetManager.StorageManager.save_file_async(table_name, data, subdir="tables")
+            self.AssetManager.StorageManager.save_file_async(table_name+'.json', data, subdir="tables")
             return ActionResult(True, f"Table {table.name} saved successfully")
         except Exception as e:
             logger.error(f"Failed to save table {table_id or table_name}: {e}")
@@ -422,7 +422,9 @@ class Actions(ActionsProtocol):
             # Update current table if it was deleted
             if self.context.current_table == table:
                 self.context.current_table = self.context.list_of_tables[0] if self.context.list_of_tables else None
-            
+                if hasattr(self.context, 'player') and hasattr(self.context.current_table, 'player'):
+                    self.context.player = self.context.current_table.player
+
             action = {
                 'type': 'delete_table',
                 'table_id': table_id,
@@ -502,7 +504,7 @@ class Actions(ActionsProtocol):
     # SPRITE MANAGEMENT (CRUD OPERATIONS)
     # ============================================================================
     def create_sprite(self, table_id: str, sprite_id: str, position: Position , 
-                     image_path: str, layer: str = "tokens", to_server: bool = False, **kwargs) -> ActionResult:
+                     image_path: str, layer: str = "tokens", to_server: bool = False,is_player=False, **kwargs) -> ActionResult:
         """Create a new sprite on a table"""
         #TODO refactor to use sprite data dict
         if not isinstance(position, Position):
@@ -521,7 +523,8 @@ class Actions(ActionsProtocol):
                 'table_id': table.table_id,
                 'coord_x': position.x,
                 'coord_y': position.y,
-                'sprite_id': sprite_id,               
+                'sprite_id': sprite_id,
+                'is_player': is_player,
                 **kwargs
             }
             logger.debug(f"Creating sprite with data: {sprite_data}")
@@ -542,6 +545,12 @@ class Actions(ActionsProtocol):
                     texture = self.AssetManager.find_texture_by_asset_id(provided_asset_id)
                     if texture:
                         logger.info(f"Found cached texture for asset {provided_asset_id}")                        
+                        if sprite.frect.w <= 0 or sprite.frect.h <= 0:
+                            try:
+                                sprite.frect.w=kwargs['frect_w']
+                                sprite.frect.h=kwargs['frect_h']
+                            except Exception as e:
+                                logger.warning(f"Failed to set frect size for sprite {sprite_id}: {e}")
                         sprite.reload_texture(texture, int(sprite.frect.w), int(sprite.frect.h))
                         logger.debug(f"Sprite frect: {sprite.frect.w}x{sprite.frect.h}")
                     else:
@@ -563,7 +572,9 @@ class Actions(ActionsProtocol):
                 'table_id': table_id,                
                 'position': position,
                 'image_path': image_path,
-                'layer': layer
+                'layer': layer,
+                'frect.w': sprite.frect.w,
+                'frect.h': sprite.frect.h
             }
             self._add_to_history(action)
             
@@ -572,14 +583,16 @@ class Actions(ActionsProtocol):
                 'position': position,
                 'image_path': image_path,
                 'layer': layer,
-                'sprite': sprite
+                'sprite': sprite,
+                'frect.w': sprite.frect.w,
+                'frect.h': sprite.frect.h
             })
         except Exception as e:
             return ActionResult(False, f"Failed to create sprite: {str(e)}")
     
     def create_animated_sprite(self, table_id: str, sprite_id: str, position: Position , 
                      image_path: str, atlas_path:str, layer: str = "tokens", to_server: bool = False, frame_duration=100,
-                      rotation=0.0, **kwargs) -> ActionResult:
+                      rotation=0.0,is_player=False, **kwargs) -> ActionResult:
         """Create a new animated sprite on a table"""
         #TODO refactor to use sprite data dict
         if not isinstance(position, Position):
@@ -602,6 +615,7 @@ class Actions(ActionsProtocol):
                 'atlas_path': atlas_path,
                 'frame_duration': frame_duration,
                 'rotation': rotation,
+                'is_player': is_player,
                 **kwargs
             }
             logger.debug(f"Creating sprite with data: {sprite_data}")
@@ -643,7 +657,9 @@ class Actions(ActionsProtocol):
                 'table_id': table_id,                
                 'position': position,
                 'image_path': image_path,
-                'layer': layer
+                'layer': layer,
+                'frect.w': sprite.frect.w,
+                'frect.h': sprite.frect.h
             }
             self._add_to_history(action)
             
@@ -652,7 +668,9 @@ class Actions(ActionsProtocol):
                 'position': position,
                 'image_path': image_path,
                 'layer': layer,
-                'sprite': sprite
+                'sprite': sprite,
+                'frect.w': sprite.frect.w,
+                'frect.h': sprite.frect.h
             })
         except Exception as e:
             return ActionResult(False, f"Failed to create sprite: {str(e)}")
@@ -1821,7 +1839,8 @@ class Actions(ActionsProtocol):
                 elif 'save' in filename.lower():
                     self._apply_save_data(data)
                 elif 'table' in filename.lower():
-                    self._load_table_data(data)
+                    table = self._load_table_data(data)
+                    self.context.current_table = table
                     
             elif filetype in {'txt', 'log'}:
                 # Handle text/log files
@@ -1899,12 +1918,15 @@ class Actions(ActionsProtocol):
             result = self.create_table_from_dict(table_data)
             if result.success:
                 logger.info(f"Table loaded from file: {table_data.get('table_name', 'unknown')}")
+                return result.data['table']
+            
             else:
-                logger.error(f"Failed to load table from file: {result.message}")
-                
+                logger.error(f"Failed to load table from file: {result.message}")         
+ 
         except Exception as e:
             logger.error(f"Error loading table data: {e}")
-    
+        return None
+        
     def _process_csv_data(self, filename: str, csv_data: str):
         """Process CSV data"""
         try:
