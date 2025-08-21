@@ -11,14 +11,14 @@ if sys.stderr is None:
 # System imports
 import sys
 import sdl3
-import random
 from typing import TYPE_CHECKING
 from ctypes import c_int, c_char_p, c_void_p, byref
 # Core imports
-from core import event_sys, event_player_mode, MovementManager
+from core import event_sys, event_player_mode
 from core.Context import Context
 from core.Actions import Actions
 from core.actions_protocol import Position
+from core.MovementManager import MovementManager
 # Render imports
 from render import PaintManager
 from render.RenderManager import RenderManager
@@ -230,10 +230,10 @@ def SDL_AppInit_func() -> Context:
         result5=game_context.Actions.create_sprite( test_table.table_id, "sprite_wall", Position(300, 300), image_path="wall1.png", scale_x=0.1, scale_y=0.1, collidable=True, layer='obstacles')
         logger.info(f"Created sprites: {result1}, {result2}, {result3}, {result4}, {result5}")
         # add player        
-        result9=game_context.Actions.create_animated_sprite(test_table.table_id, "sprite_foots_run", Position(0, 0), image_path="soldier/foots/run.png", atlas_path="resources/soldier/foots/run.json", scale_x=0.5, scale_y=0.5, collidable=True, visible=False, frame_duration=30)
-        result6=game_context.Actions.create_animated_sprite(test_table.table_id, "sprite_player_idle", Position(0, 0), image_path="soldier/handgun/idle.png", atlas_path="resources/soldier/handgun/idle.json", scale_x=0.5, scale_y=0.5, collidable=True )
-        result7=game_context.Actions.create_animated_sprite(test_table.table_id, "sprite_player_move", Position(0, 0), image_path="soldier/handgun/move.png", atlas_path="resources/soldier/handgun/move.json", scale_x=0.5, scale_y=0.5, collidable=True, visible=False) 
-        result8=game_context.Actions.create_animated_sprite(test_table.table_id, "sprite_player_shoot", Position(0, 0), image_path="soldier/handgun/shoot.png", atlas_path="resources/soldier/handgun/shoot.json", scale_x=0.5, scale_y=0.5, collidable=True, visible=False, frame_duration=100)
+        result9=game_context.Actions.create_animated_sprite(test_table.table_id, "sprite_foots_run", Position(0, 0), image_path="soldier/foots/run.png", atlas_path="resources/soldier/foots/run.json", scale_x=0.5, scale_y=0.5, collidable=False, visible=False, frame_duration=30)
+        result6=game_context.Actions.create_animated_sprite(test_table.table_id, "sprite_player_idle", Position(0, 0), image_path="soldier/handgun/idle.png", atlas_path="resources/soldier/handgun/idle.json", scale_x=0.5, scale_y=0.5, collidable=False )
+        result7=game_context.Actions.create_animated_sprite(test_table.table_id, "sprite_player_move", Position(0, 0), image_path="soldier/handgun/move.png", atlas_path="resources/soldier/handgun/move.json", scale_x=0.5, scale_y=0.5, collidable=False, visible=False) 
+        result8=game_context.Actions.create_animated_sprite(test_table.table_id, "sprite_player_shoot", Position(0, 0), image_path="soldier/handgun/shoot.png", atlas_path="resources/soldier/handgun/shoot.json", scale_x=0.5, scale_y=0.5, collidable=False, visible=False, frame_duration=100)
 
         if result6.success and result6.data:
             game_context.player.sprite = result6.data['sprite']
@@ -242,12 +242,13 @@ def SDL_AppInit_func() -> Context:
         if result6.success and result7.success and result8.success and result9.success:
             for sprite in [result6.data['sprite'], result7.data['sprite'], result8.data['sprite'], result9.data['sprite']]:
                 game_context.player.sprite_dict[sprite.sprite_id] = sprite
+                sprite.is_player = True
+        test_table.player=game_context.player
         # Add data for bullets
         game_context.player.sprite_bullet_dict= {
             "sprite_path": "bullets/pistol_bullet/bullet.png",
             "atlas_path": "resources/bullets/pistol_bullet/bullet.json",
-        }
-                
+        }                
 
     # Initialize RenderManager
     try:
@@ -264,6 +265,14 @@ def SDL_AppInit_func() -> Context:
     except Exception as e:
         logger.error(f"Failed to initialize RenderManager: {e}")
         game_context.RenderManager = None
+    
+    # Initialize MovementManager
+    try:
+        logger.info("Initializing MovementManager...")
+        game_context.MovementManager = MovementManager(game_context.current_table, game_context.player)
+    except Exception as e:
+        logger.error(f"Failed to initialize MovementManager: {e}")
+        game_context.MovementManager = None
     return game_context
 
 def SDL_AppIterate(context):
@@ -291,9 +300,9 @@ def SDL_AppIterate(context):
     if table:
         # Set the table's screen area for coordinate transformation
         table.set_screen_area(table_x, table_y, table_width, table_height)
-        
-    # Movement 
-    MovementManager.move_sprites(context, delta_time)
+
+    # Movement
+    context.MovementManager.move_and_collide(delta_time)
     # Render all sdl content
     context.RenderManager.iterate_draw(table, context.light_on, context)
     # Render paint system if active (in table area)
