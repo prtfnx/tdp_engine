@@ -149,6 +149,7 @@ class ContextMenu:
             'map': 'Map - Background elements',
             'tokens': 'Tokens - Characters and creatures', 
             'dungeon_master': 'DM - DM-only elements',
+            'projectiles': 'Projectiles - Arrows, bullets, etc.',
             'light': 'Light - Lighting effects',
             'height': 'Height - Elevation markers',
             'obstacles': 'Obstacles - Barriers and walls'
