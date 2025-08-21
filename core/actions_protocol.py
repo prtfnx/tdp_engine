@@ -170,10 +170,11 @@ LAYERS = {
     'map': 0,
     'tokens': 1,    
     'dungeon_master': 2,
-    'light': 3,
-    'height': 4,
-    'obstacles': 5,
-    'fog_of_war': 6
+    'projectiles': 3,  # Projectiles can be on the same layer as DM elements
+    'light': 4,
+    'height': 5,
+    'obstacles': 6,
+    'fog_of_war': 7
 }
 
 # Constants for action types (for batch operations)
