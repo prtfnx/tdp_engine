@@ -6,13 +6,15 @@ from typing import Optional, TYPE_CHECKING
 from ctypes import c_float, byref
 from venv import logger
 from enum import Enum, auto
+from core.Sprite import AnimatedSprite
 from core.actions_protocol import Position
 if TYPE_CHECKING:
-    from core.Sprite import Sprite
+    from core.Sprite import Sprite, AnimatedSprite
 ACCELERATION_COEF = 0.1
 SPEED_COEF = 0.01
 EPSILON = 0.01  # Small value to avoid floating point precision issues
 SHOOT_COOLDOWN = 0.3  # 300 ms cooldown for shooting
+
 class PlayerState(Enum):
     IDLE = auto()
     MOVING = auto()
@@ -29,7 +31,6 @@ class Player():
         self.level: int = 1
         self.is_alive: bool = True        
         self.direction: float = 0
-        self.acceleration: float = 0
         self.sprite: Optional[Sprite] = None        
         self.go_x: bool = False
         self.go_y: bool = False
@@ -98,8 +99,10 @@ class Player():
     
     def set_acceleration(self, ax: float, ay: float):
         """Set acceleration in x and y directions."""
+        print(f'ax and ay: {ax}, {ay}')
         self.acceleration_x = ax
         self.acceleration_y = ay
+        print(f'after set acceleration: {self.acceleration_x}, {self.acceleration_y}')
 
     def update_moving(self,move_x:bool, move_y:bool):
         """Update moving state based on input."""
@@ -109,10 +112,12 @@ class Player():
 
     def update_acceleration(self, dt, acceleration_friction: float):
         """Update acceleration based on friction and time delta (dt)."""
+        
         if not hasattr(self, 'acceleration_x'):
             self.acceleration_x = 0
         if not hasattr(self, 'acceleration_y'):
-            self.acceleration_y = 0        
+            self.acceleration_y = 0      
+         
         if self.go_x:
             self.acceleration_x += dt * ACCELERATION_COEF
             self.go_x = False
@@ -122,7 +127,7 @@ class Player():
         # Exponential decay for variable dt
         self.acceleration_x *= acceleration_friction ** dt
         self.acceleration_y *= acceleration_friction ** dt
-
+        #print(f'acceleration after: {self.acceleration_x}, {self.acceleration_y}')
     def update_speed(self, dt: float, speed_friction: float):
         """Update speed based on acceleration and time delta (dt)."""
         if not hasattr(self, 'acceleration_x'):
@@ -133,8 +138,10 @@ class Player():
             self.speed_x = 0
         if not hasattr(self, 'speed_y'):
             self.speed_y = 0
+        #print(f'acceleration x: {self.acceleration_x }, dt: {dt} speed_coef: {SPEED_COEF}')
         self.speed_x += self.acceleration_x * dt * SPEED_COEF
         self.speed_y += self.acceleration_y * dt * SPEED_COEF
+    
         if abs(self.speed_x) < EPSILON:
             self.speed_x = 0
         else:
@@ -196,6 +203,7 @@ class Player():
         self.update_speed(dt, speed_friction)
         self.update_position(dt)
         self.state_step()
+        #print(f'player name: {self.name} acceleration {self.acceleration_x}, {self.acceleration_y}, speed {self.speed_x}, {self.speed_y}')
         #print(f'player state: {self.state} and sprite selected: {self.sprite} and  {self.last_shoot_time=} and {sdl3.SDL_GetTicks() / 1000.0=}')
 
         
@@ -272,3 +280,56 @@ class Player():
             vx = dx / length
             vy = dy / length
             sprite.set_speed(vx * sprite.speed, vy * sprite.speed)
+    
+    def to_dict(self):
+        """Convert player to dictionary format."""
+        return {
+            'name': self.name,
+            'coord_x': self.coord_x.value,
+            'coord_y': self.coord_y.value,
+            'health': self.health,
+            'score': self.score,
+            'level': self.level,
+            'is_alive': self.is_alive,
+            'direction': self.direction,
+            'acceleration_x': self.acceleration_x,
+            'acceleration_y': self.acceleration_y,
+            'speed_x': self.speed_x,
+            'speed_y': self.speed_y,
+            'state': self.state.name,
+            'weapon_angle': self.weapon_angle,
+            'sprite_dict': {name: sprite.sprite_id for name, sprite in self.sprite_dict.items()},
+            'sprite_bullet_dict': {name: path for name, path in self.sprite_bullet_dict.items()},
+        }
+    def from_dict(self, data: dict, player_sprites):
+        """Load player data from dictionary format."""
+        self.coord_x = c_float(data.get("coord_x", 650.0))
+        self.coord_y = c_float(data.get("coord_y", 435.0))
+        self.health = data.get("health", 100)
+        self.score = data.get("score", 0)
+        self.level = data.get("level", 1)
+        self.is_alive = data.get("is_alive", True)
+        self.direction = data.get("direction", 0)
+        self.acceleration_x = data.get("acceleration_x", 0)
+        self.acceleration_y = data.get("acceleration_y", 0)
+        logger.error(f"acceleration_x: {self.acceleration_x}, acceleration_y: {self.acceleration_y}")
+        self.speed_x = data.get("speed_x", 0)
+        self.speed_y = data.get("speed_y", 0)
+        self.state = data.get("state", "IDLE")
+        self.weapon_angle = data.get("weapon_angle", 0.0)
+        # Fill player.sprite_dict from player_sprites using player_data['sprite_dict']
+        self.sprite_dict = {}
+        sprite_dict_data = data.get('sprite_dict', {})
+        print(player_sprites)
+        for key, sprite_id in sprite_dict_data.items():
+            found_sprite = next((s for s in player_sprites if getattr(s, 'sprite_id', None) == sprite_id), None)
+            if found_sprite:
+                self.sprite_dict[key] = found_sprite
+            else:
+                logger.warning(f"Sprite with id '{sprite_id}' not found in player_sprites for key '{key}'")
+        self.sprite_bullet_dict = {name: bullet for name, bullet in data.get("sprite_bullet_dict", {}).items()}
+        #TODO - map sprite and state
+        self.state = PlayerState.IDLE
+        self.sprite = self.sprite_dict.get("sprite_player_idle", None)
+        self.sprite.coord_x = self.coord_x
+        self.sprite.coord_y = self.coord_y
