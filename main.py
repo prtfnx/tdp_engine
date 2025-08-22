@@ -1,12 +1,22 @@
 # For pyinstaller build and deploy
 from email.mime import audio
-import re
-import sys
-import os
-if sys.stdout is None:
-    sys.stdout = open(os.devnull, 'w')
-if sys.stderr is None:
-    sys.stderr = open(os.devnull, 'w')
+import re, sys, os
+if sys.stdout is None: sys.stdout = open(os.devnull, 'w')
+if sys.stderr is None: sys.stderr = open(os.devnull, 'w')
+# If running frozen, ensure current working directory points to the extracted
+# bundle location so relative paths like 'resources/...' resolve correctly.
+if getattr(sys, 'frozen', False):
+    try:
+        # In onefile, sys._MEIPASS points to the temp extraction dir; in onedir the
+        # executable directory is where resources are located.
+        if getattr(sys, '_MEIPASS', None):
+            os.chdir(sys._MEIPASS)
+        else:
+            os.chdir(os.path.dirname(sys.executable))
+    except Exception:
+        pass
+
+
 
 # System imports
 import sys
@@ -19,6 +29,7 @@ from core.Context import Context
 from core.Actions import Actions
 from core.actions_protocol import Position
 from core.MovementManager import MovementManager
+from core.EnemyManager import EnemyManager
 # Render imports
 from render import PaintManager
 from render.RenderManager import RenderManager
@@ -44,8 +55,8 @@ if TYPE_CHECKING:
        
 
 logger = setup_logger(__name__)
-LOAD_LEVEL: bool = True
-MUSIC: bool = False
+LOAD_LEVEL: bool = False
+MUSIC: bool = True
 PLAYER_MODE: bool = False
 BASE_WIDTH: int = 1920
 BASE_HEIGHT:  int = 1080
@@ -220,23 +231,25 @@ def SDL_AppInit_func() -> Context:
         PaintManager.init_paint_system(game_context)
         logger.info("Paint system initialized.")
     except Exception as e:
-        logger.error(f"Failed to initialize paint system: {e}")   
+        logger.error(f"Failed to initialize paint system: {e}")       
     # Initialize Table    
     
-    test_table = game_context.add_table("test_table", BASE_WIDTH, BASE_HEIGHT)  
+    test_table = game_context.add_table("test_table", BASE_WIDTH*3, BASE_HEIGHT*3)  
     if test_table:           
         result1=game_context.Actions.create_sprite( test_table.table_id, "sprite_map", Position(0, 0), image_path="map.jpg", scale_x=0.5, scale_y=0.5, layer='map')
         result2=game_context.Actions.create_sprite( test_table.table_id, "sprite_woman", Position(0, 0), image_path="woman.png", scale_x=0.5, scale_y=0.5,)
         result3=game_context.Actions.create_sprite( test_table.table_id, "sprite_token1", Position(100, 100), image_path="token_1.png", scale_x=0.5, scale_y=0.5, collidable=True)
         result4=game_context.Actions.create_sprite( test_table.table_id, "sprite_test", Position(200, 200), image_path="test.gif", scale_x=0.5, scale_y=0.5)
-        result5=game_context.Actions.create_sprite( test_table.table_id, "sprite_wall", Position(300, 300), image_path="wall1.png", scale_x=0.1, scale_y=0.1, collidable=True, layer='obstacles')
+        result5=game_context.Actions.create_sprite( test_table.table_id, "sprite_wall", Position(300, 300), image_path="wall1.png", scale_x=0.1, scale_y=0.1, collidable=False, layer='obstacles')
+        result51=game_context.Actions.create_sprite( test_table.table_id, "sprite_wall", Position(300, 300), image_path="wall1.png", scale_x=0.1, scale_y=0.1, collidable=True, layer='tokens')
+        
         logger.info(f"Created sprites: {result1}, {result2}, {result3}, {result4}, {result5}")
         # add player        
         result9=game_context.Actions.create_animated_sprite(test_table.table_id, "sprite_foots_run", Position(0, 0), image_path="soldier/foots/run.png", atlas_path="resources/soldier/foots/run.json", scale_x=0.5, scale_y=0.5, collidable=False, visible=False, frame_duration=30, is_player=True)
         result6=game_context.Actions.create_animated_sprite(test_table.table_id, "sprite_player_idle", Position(0, 0), image_path="soldier/handgun/idle.png", atlas_path="resources/soldier/handgun/idle.json", scale_x=0.5, scale_y=0.5, collidable=False,is_player=True, visible=True, frame_duration=100)
         result7=game_context.Actions.create_animated_sprite(test_table.table_id, "sprite_player_move", Position(0, 0), image_path="soldier/handgun/move.png", atlas_path="resources/soldier/handgun/move.json", scale_x=0.5, scale_y=0.5, collidable=False, visible=False, frame_duration=100, is_player=True)
         result8=game_context.Actions.create_animated_sprite(test_table.table_id, "sprite_player_shoot", Position(0, 0), image_path="soldier/handgun/shoot.png", atlas_path="resources/soldier/handgun/shoot.json", scale_x=0.5, scale_y=0.5, collidable=False, visible=False, frame_duration=100, is_player=True)
-
+        
         if result6.success and result6.data:
             game_context.player.sprite = result6.data['sprite']
             game_context.player.sprite.coord_x = game_context.player.coord_x
@@ -251,7 +264,40 @@ def SDL_AppInit_func() -> Context:
             "sprite_path": "bullets/pistol_bullet/bullet.png",
             "atlas_path": "resources/bullets/pistol_bullet/bullet.json",
         }                
+    # Initialize Enemy manager
+    try:
+        game_context.EnemyManager = EnemyManager()
+        logger.info("EnemyManager initialized.")
+        mage1 = game_context.EnemyManager.add_enemy('Mage_1')
+        minotaur1 = game_context.EnemyManager.add_enemy('Minotaur')
+        i=0
+        for enemy in game_context.EnemyManager.enemies:            
+            #order [idle,walk, attack] #TODO - proper system for managment for enemies
+            sprites_list_order = []
+            for sprite_path, atlas_path in zip(enemy.list_of_sprites_path, enemy.list_of_atlas_path):
+                result = game_context.Actions.create_animated_sprite(test_table.table_id, sprite_path + enemy.enemy_id, Position(100+i, 500), image_path=sprite_path, atlas_path=atlas_path, scale_x=2, scale_y=2, collidable=False, visible=True, frame_duration=100, is_player=False)
+                if result.success and result.data:
+                    sprite = result.data['sprite']
+                    enemy.sprite = sprite
+                    enemy.sprite.coord_x = enemy.coord_x
+                    enemy.sprite.coord_y = enemy.coord_y
+                    # enemy.sprite.original_w = enemy.sprite.fra
+                    # enemy.sprite.original_h = enemy.sprite.height
+                    sprites_list_order.append(enemy.sprite)
+            enemy.dict_of_sprites = {
+                "sprite_enemy_idle": sprites_list_order[0],
+                "sprite_enemy_walk": sprites_list_order[1],
+                "sprite_enemy_attack": sprites_list_order[2]
+            }
+            i += 200
+        # Link to casting rays:
+        game_context.EnemyManager.cast_ray = game_context.GeometryManager.cast_ray_and_check_unobstructed_vision
+        game_context.EnemyManager.prepare_enemies()
 
+    except Exception as e:
+        logger.error(f"Failed to initialize EnemyManager: {e}")
+        game_context.EnemyManager = None
+        raise(e)
     # Initialize RenderManager
     try:
         logger.info("Initializing RenderManager...")
@@ -310,7 +356,9 @@ def SDL_AppIterate(context):
     context.RenderManager.iterate_draw(table, context.light_on, context)
     # Render paint system if active (in table area)
     if PaintManager.is_paint_mode_active():
-        PaintManager.render_paint_system()    
+        PaintManager.render_paint_system()
+        # Enemy logic    
+    context.EnemyManager.update(context.player, context.RenderManager.obstacles_np)    
     # Async event queue for network and io   
     if context.AssetManager and context.Actions:
         completed = context.AssetManager.process_all_completed_operations()        
@@ -333,7 +381,8 @@ def main():
     except Exception as e:
         logger.critical("Error initializing SDL: %s", e)
         sdl3.SDL_Quit()
-        sys.exit(1)       
+        raise(e)
+           
     running = True
     event = sdl3.SDL_Event() 
     if LOAD_LEVEL:
