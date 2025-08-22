@@ -21,28 +21,34 @@ BUILD_DIR = os.path.join(PROJECT_ROOT, "build")
 ASSETS_DIR = os.path.join(PROJECT_ROOT, "assets")
 
 # List of asset folders to copy
-ASSET_FOLDERS = [
-    "assets",
+ASSET_FOLDERS = [    
     "resources",
 ]
 
 # PyInstaller options
+USE_ONEFILE = False  # Set to False to build --onedir for testing
+
 PYINSTALLER_OPTS = [
     MAIN_SCRIPT,
-    "--onefile",
-    "--windowed",
+    ("--onefile" if USE_ONEFILE else "--onedir"),
+    #"--windowed",
     f"--additional-hooks-dir={PROJECT_ROOT}",
     f"--distpath={DIST_DIR}",
     f"--workpath={BUILD_DIR}",
-    f"--add-data={ASSETS_DIR}{os.pathsep}assets",
-    f"--add-data=resources/sdl3{os.pathsep}sdl3"
+    #f"--add-data={ASSETS_DIR}{os.pathsep}assets",
+    # Treat SDL runtime DLLs as binaries so PyInstaller handles them as native libs.
+    # Use --add-binary for the folder containing the SDL DLLs.
+    f"--add-binary=resources/sdl3{os.pathsep}sdl3/bin",
+    # Useful debug switch: disable UPX to avoid potential DLL performance/corruption issues
+    # "--noupx",
 ]
 
-def copy_assets():
-    """Copy asset folders to the dist directory."""
+def copy_resources():
+    """Copy resource folders to the dist directory."""
     for folder in ASSET_FOLDERS:
         src = os.path.join(PROJECT_ROOT, folder)
-        dst = os.path.join(DIST_DIR, folder)
+        # Place resources next to the internal in the onedir layout
+        dst = os.path.join(DIST_DIR, "main\_internal", folder)
         if os.path.exists(src):
             try:
                 if os.path.exists(dst):
@@ -66,7 +72,7 @@ def build_executable():
 
 def main():
     build_executable()
-    copy_assets()
+    copy_resources()
     logger.info("Build and deploy completed successfully.")
 
 if __name__ == "__main__":
