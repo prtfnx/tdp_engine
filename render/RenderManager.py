@@ -41,7 +41,7 @@ class RenderManager():
         self.obstacles_changed: bool = True
         self.view_distance: int = 500  # TODO: take from player
         self.visibility_polygon_vertices: Optional[ctypes.Array] = None
-        
+        self.obstacles_np: Optional[ctypes.Array] = None
         # Fog of war texture-based rendering
         self.fog_texture: Optional[sdl3.SDL_Texture] = None
         self.fog_texture_dirty: bool = True
@@ -50,6 +50,7 @@ class RenderManager():
         self._cached_viewport_state: Optional[Tuple[float, float, float]] = None
         # For debugging
         self.aabb_rectangles: list= []
+
 
     def _apply_layer_settings(self):
         sdl3.SDL_SetRenderDrawColor(self.renderer, 
@@ -165,16 +166,19 @@ class RenderManager():
         # Render sprites in the layer (with animation support)
 
         for sprite in layer:
-           
+            #print(f'Sprite: {sprite} with frect: {sprite.frect.x}, {sprite.frect.y}, {sprite.frect.w}, {sprite.frect.h}')
+            #print(f'sprite: {sprite} with type {type(sprite)}')
             if sprite.visible == True:
                 # Animation support: if sprite has frames, animate
                 if isinstance(sprite, AnimatedSprite):
+                    
                     sprite.update_animation()
                     src_frect = sprite.get_current_frame_frect()
                     if not is_selected_layer:
                         sdl3.SDL_SetTextureAlphaMod(sprite.texture, ctypes.c_ubyte(128))
                     else:
                         sdl3.SDL_SetTextureAlphaMod(sprite.texture, ctypes.c_ubyte(255))
+                    #print(f'Rendering animated sprite {sprite.sprite_id} with src_frect ({src_frect.x}, {src_frect.y} {src_frect.w}, {src_frect.h})')
                     # Rotation
                     rotation = getattr(sprite, 'rotation', 0.0)
                     if rotation != 0.0:
@@ -262,15 +266,16 @@ class RenderManager():
         # Render visibility polygon on the texture
         sdl3.SDL_SetRenderTarget(self.renderer, render_texture)
         sdl3.SDL_RenderClear(self.renderer)
-        # Form visibility polygon if the point of view has changed
-        if self.point_of_view_changed or self.obstacles_changed:
+        # Form visibility polygon if the point of view has changed        
+        if self.point_of_view_changed or self.obstacles_changed: 
+            self.dirty = 0
             obstacles_tuple = tuple(self.dict_of_sprites_list.get("obstacles", []))
-            player_position_tuple = tuple((player.frect.x, player.frect.y, player.frect.w, player.frect.h 
-                                          if player.frect else (0, 0, 0, 0)))
+            player_position_tuple = tuple((player.frect.x, player.frect.y, player.frect.w, player.frect.h
+                                            if player.frect else (0, 0, 0, 0)))
             self.visibility_polygon_vertices = self.get_visibility_polygon(player_position_tuple,
-                                                                           obstacles_tuple)
-            # For testing purposes dont use point_of_view_changed
-            # self.point_of_view_changed = False
+                                                                        obstacles_tuple)
+        # For testing purposes dont use point_of_view_changed
+        # self.point_of_view_changed = False
         # Draw polygon of visibility
         sdl3.SDL_SetRenderDrawColor(self.renderer, 255, 255, 255, 255)
         sdl3.SDL_RenderGeometry(self.renderer, None, self.visibility_polygon_vertices, len(self.visibility_polygon_vertices), None, 0)
@@ -285,6 +290,7 @@ class RenderManager():
         GM = self.GeometricManager
         player_pos = GM.center_position_from_tuple(player_tuple)
         obstacles_np = GM.sprites_to_obstacles_numpy(obstacles)
+        self.obstacles_np = obstacles_np
         # TODO step_to_gap get from settings 
         visibility_polygon = GM.generate_visibility_polygon(
             player_pos, obstacles_np, max_view_distance=self.view_distance, step_to_gap=5
@@ -570,10 +576,18 @@ class RenderManager():
         if fog_of_war_tool and fog_of_war_tool.active:
             fog_of_war_tool.render(self.renderer)
         # debugging              
-        if  context.debug_mode or context.is_gm:
-            
+        if context.debug_mode or context.is_gm:
             self.draw_aabb_margin(table)
             self.draw_margin(table.selected_sprite)  # Draw margin around selected sprite if any
+            # Draw circle around each enemy sprite
+            if hasattr(context, 'EnemyManager') and hasattr(context.EnemyManager, 'enemies'):
+                for enemy in context.EnemyManager.enemies:
+                    sprite = getattr(enemy, 'sprite', None)
+                    if sprite and hasattr(sprite, 'frect'):
+                        center_x = sprite.frect.x + sprite.frect.w / 2
+                        center_y = sprite.frect.y + sprite.frect.h / 2
+                        radius = getattr(enemy, 'vision_distance', 16)  # Default to 16 if not set
+                        self._draw_circle(center_x, center_y, radius, (128, 0, 128, 255))  # Purple
 
     def render_fog_layer_texture(self, hide_rectangles: List[Tuple[Tuple[float, float], Tuple[float, float]]], 
                                 reveal_rectangles: List[Tuple[Tuple[float, float], Tuple[float, float]]],
