@@ -671,6 +671,19 @@ def handle_key_event(cnt, key_code):
     match key_code:
         case sdl3.SDL_SCANCODE_ESCAPE:
             pass
+        #fast debug for enemies state
+        case sdl3.SDL_SCANCODE_Z:
+            from core.Enemy import EnemyState
+            for enemy in cnt.EnemyManager.enemies:
+                enemy.set_state(EnemyState.IDLE)
+        case sdl3.SDL_SCANCODE_X:
+            from core.Enemy import EnemyState
+            for enemy in cnt.EnemyManager.enemies:
+                enemy.set_state(EnemyState.CHASING)
+        case sdl3.SDL_SCANCODE_C:
+            from core.Enemy import EnemyState
+            for enemy in cnt.EnemyManager.enemies:
+                enemy.set_state(EnemyState.ATTACKING)
         case sdl3.SDL_SCANCODE_Q:
             return sdl3.SDL_APP_SUCCESS
         case sdl3.SDL_SCANCODE_P:  # Paint mode toggle            
