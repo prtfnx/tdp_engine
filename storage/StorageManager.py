@@ -58,6 +58,7 @@ class StorageManager:
                     'success': False,
                     'error': str(e)
                 })
+                logger.error(f"Error saving file {filename}: {e}")
         
         self._pending_operations[operation_id] = self._executor.submit(_save)
         return operation_id
@@ -115,13 +116,13 @@ class StorageManager:
                     'success': False,
                     'error': str(e)
                 })
-        
+                logger.error(f"Error saving file {filename}: {e}")
         self._pending_operations[operation_id] = self._executor.submit(_import)
         return operation_id
-    
-    def load_file_async(self, filename: str, subdir: str = "", 
-                       as_json: bool = False, to_server:bool = False) -> str:
-        """Load file asynchronously. Returns operation ID."""
+
+    def load_file_async(self, filename: str, subdir: str = "",
+                       as_json: bool = False, to_server: bool = False) -> str:
+        """Load file asynchronously. Returns operation ID."""        
         operation_id = str(uuid.uuid4())[:8]
         logger.debug(f"Loading file {filename} from {subdir} with as_json={as_json}")
         def _load():
@@ -171,7 +172,7 @@ class StorageManager:
                     'data': None,
                     'error': str(e)
                 })
-        
+                logger.error(f"Error loading file {filename}: {e}")
         self._pending_operations[operation_id] = self._executor.submit(_load)
         return operation_id
     
@@ -202,7 +203,7 @@ class StorageManager:
                     'data': [],
                     'error': str(e)
                 })
-        
+            logger.error(f"Error listing files in {subdir}: {e}")
         self._pending_operations[operation_id] = self._executor.submit(_list)
         return operation_id
     
@@ -230,7 +231,7 @@ class StorageManager:
                     'success': False,
                     'error': str(e)
                 })
-        
+                logger.error(f"Error deleting file {filename}: {e}")
         self._pending_operations[operation_id] = self._executor.submit(_delete)
         return operation_id
     
