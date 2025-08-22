@@ -5,6 +5,8 @@ import functools
 import sdl3
 import ctypes
 import logging
+
+import sdl3.SDL
 from tools.logger import setup_logger
 from core.Sprite import Sprite  
 
@@ -125,44 +127,20 @@ class GeometricManager:
             logger.error(f"Unexpected sprite_rects shape: {sprite_rects.shape}, expected (N, 4)")
             return np.empty((0, 2, 2), dtype=np.float64)
         
-        # Vectorized calculation of all corners
+        # Vectorized calculation for middle horizontal line segment
         x, y, w, h = sprite_rects[:, 0], sprite_rects[:, 1], sprite_rects[:, 2], sprite_rects[:, 3]
-        # Calculate all corner points vectorized
-        x2 = x + w  # Right edge x-coordinate
-        y2 = y + h  # Bottom edge y-coordinate        
-        #  Create all line segments at once using vectorized operations
+        mid_y = y + h / 2.0  # Middle y of rectangle
+        x_left = x           # Left edge
+        x_right = x + w      # Right edge
         num_sprites = len(sprite_rects)
-                # Pre-allocate obstacles array: 4 segments per sprite
-        obstacles = np.empty((num_sprites * 4, 2, 2), dtype=np.float64)
-        
-        # Vectorized assignment of all line segments
-        # Top edges: (x, y) -> (x2, y)
-        obstacles[0::4, 0, 0] = x     # Start x
-        obstacles[0::4, 0, 1] = y     # Start y  
-        obstacles[0::4, 1, 0] = x2    # End x
-        obstacles[0::4, 1, 1] = y     # End y
-        
-        # Right edges: (x2, y) -> (x2, y2)
-        obstacles[1::4, 0, 0] = x2    # Start x
-        obstacles[1::4, 0, 1] = y     # Start y
-        obstacles[1::4, 1, 0] = x2    # End x  
-        obstacles[1::4, 1, 1] = y2    # End y
-        
-        # Bottom edges: (x2, y2) -> (x, y2)
-        obstacles[2::4, 0, 0] = x2    # Start x
-        obstacles[2::4, 0, 1] = y2    # Start y
-        obstacles[2::4, 1, 0] = x     # End x
-        obstacles[2::4, 1, 1] = y2    # End y
-        
-        # Left edges: (x, y2) -> (x, y)
-        obstacles[3::4, 0, 0] = x     # Start x
-        obstacles[3::4, 0, 1] = y2    # Start y
-        obstacles[3::4, 1, 0] = x     # End x
-        obstacles[3::4, 1, 1] = y     # End y
-        
-        logger.debug(f" Created {len(obstacles)} line segments from {num_sprites} sprites '")
+        obstacles = np.empty((num_sprites, 2, 2), dtype=np.float64)
+        # Each obstacle is a horizontal line segment through the middle of the rectangle
+        obstacles[:, 0, 0] = x_left    # Start x
+        obstacles[:, 0, 1] = mid_y    # Start y
+        obstacles[:, 1, 0] = x_right  # End x
+        obstacles[:, 1, 1] = mid_y    # End y
+        logger.debug(f"Created {len(obstacles)} middle horizontal line segments from {num_sprites} sprites")
         logger.debug(f"Obstacles array shape: {obstacles.shape}")
-        
         return obstacles
     
     @staticmethod
@@ -515,7 +493,39 @@ class GeometricManager:
         closest_idx = np.argmin(distances_sq)
         
         return intersections[closest_idx]
-
+    
+    @staticmethod
+    def cast_ray_and_check_unobstructed_vision(from_rectangle: sdl3.SDL_FRect, to_rectangle: sdl3.SDL_FRect, obstacles: np.ndarray, vision_distance: float = 2.0, threshold: float = 2.0) -> bool:
+        """
+        Returns True if there is a direct, unobstructed line of sight from the center of from_rectangle to the center of to_rectangle, given obstacles.
+        Args:
+            from_rectangle: SDL_FRect of source (e.g., enemy)
+            to_rectangle: SDL_FRect of target (e.g., player)
+            obstacles: numpy array of shape (N, 2, 2) representing obstacle line segments
+            threshold: distance threshold to consider 'close enough' to target center
+        Returns:
+            bool: True if vision is unobstructed, False if blocked
+        """
+        from_center = GeometricManager.center_position_from_frect(from_rectangle)
+        to_center = GeometricManager.center_position_from_frect(to_rectangle)
+        direction = to_center - from_center
+        distance = np.linalg.norm(direction)
+        if vision_distance is not None and distance > vision_distance:
+            return False  # Player is out of vision range
+        if distance < 1e-6:
+            return True  # Same position
+        angle = np.arctan2(direction[1], direction[0])
+        # Cast ray from from_center to to_center, max distance = distance
+        intersection = GeometricManager._cast_ray_to_closest_obstacle(from_center, angle, int(distance), obstacles)
+        # If intersection is closer to from_center than to_center, obstacle blocks vision
+        if np.linalg.norm(intersection - to_center) <= threshold:
+            return True
+        # If intersection is significantly closer than to_center, vision is blocked
+        if np.linalg.norm(intersection - from_center) < distance - threshold:
+            return False
+        return True
+        
+        
     @staticmethod
     #@profile_function
     def _vectorized_intersections(ray_start: np.ndarray, ray_end: np.ndarray, 
