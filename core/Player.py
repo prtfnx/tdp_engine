@@ -99,10 +99,10 @@ class Player():
     
     def set_acceleration(self, ax: float, ay: float):
         """Set acceleration in x and y directions."""
-        print(f'ax and ay: {ax}, {ay}')
+        #print(f'ax and ay: {ax}, {ay}')
         self.acceleration_x = ax
         self.acceleration_y = ay
-        print(f'after set acceleration: {self.acceleration_x}, {self.acceleration_y}')
+        #print(f'after set acceleration: {self.acceleration_x}, {self.acceleration_y}')
 
     def update_moving(self,move_x:bool, move_y:bool):
         """Update moving state based on input."""
