@@ -28,8 +28,8 @@ class Sprite:
                  collidable: bool = False,
                  texture: Optional[Any] = None,  # SDL_Texture
                  layer: str = 'tokens', 
-                 coord_x: float = 0.0, 
-                 coord_y: float = 0.0,
+                 coord_x: ctypes.c_float = ctypes.c_float(0.0), 
+                 coord_y: ctypes.c_float = ctypes.c_float(0.0),
                  compendium_entity: Optional[Any] = None, 
                  entity_type: Optional[str] = None, 
                  sprite_id: Optional[str] = None, 
@@ -42,12 +42,13 @@ class Sprite:
         # Initialize all ctypes structures properly
         self.coord_x: ctypes.c_float = ctypes.c_float(coord_x)  
         self.coord_y: ctypes.c_float = ctypes.c_float(coord_y)  
-        self.rect: sdl3.SDL_Rect = sdl3.SDL_Rect() 
-        self.frect: sdl3.SDL_FRect = sdl3.SDL_FRect()  
+        self.rect: sdl3.SDL_Rect = sdl3.SDL_Rect()
+        self.frect: sdl3.SDL_FRect = sdl3.SDL_FRect()
 
         # Initialize dimensions to prevent access violations
         self.original_w: float = 0.0
         self.original_h: float = 0.0
+        # If texture is provided, set frect size
 
         # Store basic properties
         self.texture_path: Union[str, bytes] = texture_path
@@ -258,6 +259,12 @@ class AnimatedSprite(Sprite):
         self.atlas_path = atlas_path
         if atlas_path:
             self.init_animation()
+            # Set frect size from first frame if available
+            if hasattr(self, 'frame_frects') and self.frame_frects:
+                self.frect.w = ctypes.c_float(self.frame_frects[0].w)
+                self.frect.h = ctypes.c_float(self.frame_frects[0].h)
+                self.original_w = float(self.frame_frects[0].w)
+                self.original_h = float(self.frame_frects[0].h)
 
 
     def init_animation(self):
@@ -274,19 +281,21 @@ class AnimatedSprite(Sprite):
 
         for key in sorted(frames.keys(), key=frame_sort_key):
             frame = frames[key]['frame']
-            print(f"Loading frame {key}: {frame}")
+            print(f"Loading frame {key}: {frame} with {frame['w']}x{frame['h']} and x y {frame['x']} {frame['y']}")
             frect = sdl3.SDL_FRect()
             frect.x = frame['x']
             frect.y = frame['y']
-            frect.w = frame['w']
+            frect.w = frame['w'] 
             frect.h = frame['h']
+            frect.original_w = float(frect.w)
+            frect.original_h = float(frect.h)
             frame_frects.append(frect)
         
         self.frame_frects = frame_frects
 
     def update_animation(self):
         """Update the current frame based on elapsed time."""
-        now = int(time.time() * 1000)
+        now = int(time.time() * 1000)        
         if now - self.last_frame_time > self.frame_duration:
            
             self.current_frame = (self.current_frame + 1) % len(self.frame_frects)
@@ -347,7 +356,7 @@ class AnimatedSprite(Sprite):
             'visible': self.visible
         }
 
-    def get_current_frame_frect(self):
+    def get_current_frame_frect(self):        
         return self.frame_frects[self.current_frame]
 
     def set_sheet_texture(self, texture):
