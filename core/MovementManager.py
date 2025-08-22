@@ -6,7 +6,7 @@ from core.Player import ACCELERATION_COEF
 from tools.logger import setup_logger
 import numpy as np
 
-logger = setup_logger(__name__)
+logger = setup_logger(__name__, level='WARNING')
 
 TIME_TO_DIE = 2000
 ACCELERATION_FRICTION = 0.999
