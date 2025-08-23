@@ -190,6 +190,8 @@ class RenderManager():
                                                     ctypes.c_double(rotation),
                                                     ctypes.byref(center_point),
                                                     sdl3.SDL_FLIP_NONE)
+                    elif hasattr(sprite, 'is_flipped') and sprite.is_flipped:
+                       sdl3.SDL_RenderTextureRotated(self.renderer, sprite.texture, src_frect, sprite.frect, ctypes.c_double(0.0), None, sdl3.SDL_FLIP_HORIZONTAL)
                     else:                    
                         sdl3.SDL_RenderTexture(self.renderer, sprite.texture, src_frect, sprite.frect)
                 elif sprite.texture and hasattr(sprite, 'frect'):
@@ -579,15 +581,59 @@ class RenderManager():
         if context.debug_mode or context.is_gm:
             self.draw_aabb_margin(table)
             self.draw_margin(table.selected_sprite)  # Draw margin around selected sprite if any
-            # Draw circle around each enemy sprite
             if hasattr(context, 'EnemyManager') and hasattr(context.EnemyManager, 'enemies'):
+                player_sprite = getattr(getattr(context, 'player', None), 'sprite', None)
                 for enemy in context.EnemyManager.enemies:
                     sprite = getattr(enemy, 'sprite', None)
-                    if sprite and hasattr(sprite, 'frect'):
+                    if sprite and hasattr(sprite, 'frect') and player_sprite and hasattr(player_sprite, 'frect') and hasattr(self, 'GeometricManager') and self.GeometricManager:
                         center_x = sprite.frect.x + sprite.frect.w / 2
                         center_y = sprite.frect.y + sprite.frect.h / 2
-                        radius = getattr(enemy, 'vision_distance', 16)  # Default to 16 if not set
+                        radius = getattr(enemy, 'vision_distance', 16)
                         self._draw_circle(center_x, center_y, radius, (128, 0, 128, 255))  # Purple
+                        # Draw raycast
+                        GM = self.GeometricManager
+                        obstacles_np = GM.sprites_to_obstacles_numpy(self.dict_of_sprites_list.get('obstacles', []))
+                        from_center = GM.center_position_from_frect(sprite.frect)
+                        to_center = GM.center_position_from_frect(player_sprite.frect)
+                        direction = to_center - from_center
+                        distance = math.hypot(direction[0], direction[1])
+                        if radius is not None and distance > radius:
+                            direction = direction / distance if distance > 0 else [1.0, 0.0]
+                            max_distance = radius
+                        else:
+                            max_distance = distance
+                        angle = math.atan2(direction[1], direction[0])
+                        intersection = GM._cast_ray_to_closest_obstacle(
+                            from_center, angle, int(max_distance), obstacles_np
+                        )
+                        ix, iy = intersection[0], intersection[1]
+                        # Determine if player is visible (intersection close to player)
+                        player_center_x = to_center[0]
+                        player_center_y = to_center[1]
+                        can_see_player = math.hypot(ix - player_center_x, iy - player_center_y) < 2.0
+                        if can_see_player:
+                            sdl3.SDL_SetRenderDrawColor(self.renderer, ctypes.c_ubyte(255), ctypes.c_ubyte(255), ctypes.c_ubyte(0), ctypes.c_ubyte(255))  # Yellow
+                        else:
+                            sdl3.SDL_SetRenderDrawColor(self.renderer, ctypes.c_ubyte(255), ctypes.c_ubyte(0), ctypes.c_ubyte(0), ctypes.c_ubyte(255))  # Red
+                        sdl3.SDL_RenderLine(
+                            self.renderer,
+                            ctypes.c_float(center_x), ctypes.c_float(center_y),
+                            ctypes.c_float(ix), ctypes.c_float(iy)
+                        )
+                        # Draw 'X' at intersection point only
+                        self._draw_x_marker(ix, iy, color=(255, 255, 0, 255) if can_see_player else (255, 0, 0, 255))
+    def _draw_x_marker(self, x: float, y: float, size: float = 8.0, color: tuple = (255, 0, 0, 255)):
+        """Draw an 'X' marker at (x, y) for debug visualization."""
+        sdl3.SDL_SetRenderDrawColor(self.renderer,
+                                   ctypes.c_ubyte(color[0]), ctypes.c_ubyte(color[1]),
+                                   ctypes.c_ubyte(color[2]), ctypes.c_ubyte(color[3]))
+        half = size / 2
+        sdl3.SDL_RenderLine(self.renderer,
+                           ctypes.c_float(x - half), ctypes.c_float(y - half),
+                           ctypes.c_float(x + half), ctypes.c_float(y + half))
+        sdl3.SDL_RenderLine(self.renderer,
+                           ctypes.c_float(x - half), ctypes.c_float(y + half),
+                           ctypes.c_float(x + half), ctypes.c_float(y - half))
 
     def render_fog_layer_texture(self, hide_rectangles: List[Tuple[Tuple[float, float], Tuple[float, float]]], 
                                 reveal_rectangles: List[Tuple[Tuple[float, float], Tuple[float, float]]],
