@@ -6,8 +6,8 @@ import random
 import uuid
 import math
 
-SPEED = 0.1
-SHOOT_CD = 600
+SPEED = 0.01
+SHOOT_CD = 1400
 class Mage_1(Enemy):
     def __init__(self):
         super().__init__(name="Mage_1", health=80, damage=15)        
@@ -19,9 +19,10 @@ class Mage_1(Enemy):
         self.sprite_attack_atlas="resources/spritesheets/mage-1-85x94.json"
         self.save_path_to_sprites_and_atlases()
         self.dict_of_sounds = {
-            "idle": "resources/spritesheets/mage-1-85x94/sounds/idle.wav",
-            "move": "resources/spritesheets/mage-1-85x94/sounds/move.wav",
-            "attack": "resources/spritesheets/mage-1-85x94/sounds/attack.wav"
+            "idle": "resources/sounds/mage_1/idle",
+            "move": "resources/sounds/mage_1/move",
+            "attack": "resources/sounds/mage_1/attack",
+            "pain": "resources/sounds/mage_1/pain"
         }
         self.last_shoot_time = 0
         #TODO make separate system for storage data
@@ -72,6 +73,7 @@ class Mage_1(Enemy):
 
         self.sounds = {**self.sounds, **self.dict_of_sounds}
     def attack(self):
+        super().attack()
         self.shoot()
     
     def shoot(self):
