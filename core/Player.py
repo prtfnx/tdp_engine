@@ -41,6 +41,7 @@ class Player():
         self.shoot_CD = SHOOT_COOLDOWN
         self.last_shoot_time = 0  # Timestamp of the last shot
         self.last_state_change_time = 0  # Timestamp of the last state change
+        self.last_foot_sound_time = 0  # Timestamp of the last footstep sound
         # Data
         self.sprite_dict = {}
         self.sound_effects_dict = {}
@@ -70,6 +71,7 @@ class Player():
                 self.sprite.visible = False
                 self.sprite = sprite_player_move
                 self.sprite.visible = True
+
 
             case PlayerState.SHOOTING:
                 sprite_player_shoot = self.sprite_dict.get("sprite_player_shoot")
@@ -194,7 +196,11 @@ class Player():
             self.update_state(PlayerState.MOVING)
         elif self.state == PlayerState.MOVING and self.speed_x == 0 and self.speed_y == 0:
             logger.debug("Player is idle after being moving, updating state to IDLE.")
-            self.update_state(PlayerState.IDLE)        
+            self.update_state(PlayerState.IDLE) 
+        elif self.state == PlayerState.MOVING and (current_time - self.last_foot_sound_time > 0.4):
+            sound = random.choice(self.context.player_steps)
+            sdl3.Mix_PlayChannel(-1, sound ,0 )  # Play random footstep sound
+            self.last_foot_sound_time = sdl3.SDL_GetTicks() / 1000.0  # Reset footstep sound timer
         self.sprite_step()
 
     def physics_step(self, dt: float, acceleration_friction: float=1.0, speed_friction: float=1.0):
