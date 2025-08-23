@@ -1,4 +1,5 @@
 from core.Enemy import Enemy
+SPEED = 1
 class Minotaur(Enemy):
     def __init__(self):
         super().__init__(name="Minotaur", health=150, damage=25)
@@ -14,5 +15,6 @@ class Minotaur(Enemy):
             "move": "resources/Minotaur_1/sounds/move.wav",
             "attack": "resources/Minotaur_1/sounds/attack.wav"
         }
-        self.speed = 5.0
-        self.range_for_attack = 120
+        self.speed = SPEED
+        self.range_for_attack = 1
+        self.is_flipped = False
