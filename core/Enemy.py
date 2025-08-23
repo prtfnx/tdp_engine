@@ -6,6 +6,7 @@ from core.actions_protocol import Position
 import sdl3
 import uuid
 import math
+import random
 from tools.logger import setup_logger
 logger = setup_logger(__name__, level="INFO")
 
@@ -13,6 +14,7 @@ HEALTH_FOR_FLEE = 20
 TIME_FOR_SEARCHING = 5000
 IDLE_VISION_DISTANCE = 500
 SEARCH_VISION_DISTANCE = 1000
+ATTACK_CD = 1000
 
 
 class EnemyState(Enum):
@@ -44,6 +46,7 @@ class Enemy:
         # settings
         self.vision_distance: float = IDLE_VISION_DISTANCE
         # Data:
+        self.attack_cd: float = ATTACK_CD
         self.sprite_idle_path: str = ""
         self.sprite_move_path: str = ""
         self.sprite_attack_path: str = ""
@@ -51,7 +54,11 @@ class Enemy:
         self.sprite_move_atlas: str = ""
         self.sprite_attack_atlas: str = ""
         self.last_known_player_position: Optional[Position] = None
+        self.last_foot_sound_time = 0.0
         self.context = None
+        
+        # Timers
+        self.last_attack_time = 0.0
 
     def prepare(self):
         for sprite in self.dict_of_sprites.values():
@@ -84,14 +91,23 @@ class Enemy:
         return (dx, dy)
 
     def attack(self):
-        # projectile or melee attack
-        pass
+        current_time = sdl3.SDL_GetTicks()
+        if current_time - self.last_attack_time >= self.attack_cd:
+            self.last_attack_time = current_time
+            sound = random.choice(self.sounds['attack'])
+            sdl3.Mix_PlayChannel(-1, sound ,0 ) 
+            pass
 
     def move(self, dt):
         logger.debug(f"Enemy {self.name} moving from ({self.coord_x.value}, {self.coord_y.value}) with speed ({self.speed_x}, ")
         self.coord_x.value += self.speed_x*dt
         self.coord_y.value += self.speed_y*dt
         logger.debug(f"Enemy {self.name} moved to ({self.coord_x.value}, {self.coord_y.value})")
+        if hasattr(self, 'footstep_sounds') and sdl3.SDL_GetTicks() / 1000.0 - self.last_foot_sound_time > 0.6:
+            sound = random.choice(self.footstep_sounds)
+            sdl3.Mix_PlayChannel(-1, sound ,0 )  # Play random footstep sound
+            self.last_foot_sound_time = sdl3.SDL_GetTicks() / 1000.0  # Reset footstep sound timer
+
     def try_find_player(self, cast_ray,  player, obstacles_np) -> bool:
        """Cast ray to player and check obstacles"""
        #TODO implement proper system for rays and checks in group, for now dirty hack

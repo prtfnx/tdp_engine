@@ -2,9 +2,9 @@ from venv import logger
 from core.Enemy import Enemy
 from core.Enemies.Mage_1 import Mage_1
 from core.Enemies.Minotaur import Minotaur
-import core.Actions
+import os
 from tools.logger import setup_logger
-
+import sdl3
 logger = setup_logger(__name__)
 
 class EnemyManager:
@@ -19,10 +19,16 @@ class EnemyManager:
         # interface for cast ray:
         self.cast_ray = None
         self.context = None
+        
 
     def add_enemy(self, enemy):
         if enemy in self.ENEMY_TYPE_MAP.keys():
             enemy_object = self.ENEMY_TYPE_MAP[enemy]()
+            if hasattr(enemy_object, 'footstep_sounds_folder'):
+                enemy_object.footstep_sounds = [sdl3.Mix_LoadWAV(os.path.join(folder, path).encode()) for folder in enemy_object.footstep_sounds_folder for path in os.listdir(folder) if path.endswith(".wav")]
+            for key, value in enemy_object.dict_of_sounds.items():
+                print(f"Loading sounds for {key}: {value}")
+                enemy_object.sounds[key] = [sdl3.Mix_LoadWAV(os.path.join(value, path).encode()) for path in os.listdir(value) if path.endswith(".wav")]
             self.enemies.append(enemy_object)
             logger.info(f"Added enemy: {enemy_object}")
             enemy_object.context = self.context
