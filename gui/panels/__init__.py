@@ -11,6 +11,7 @@ from .layer_panel import LayerPanel
 from .storage_panel import StoragePanel
 from .character_sheet_panel import CharacterSheetPanel
 from .journal_panel import JournalPanel
+from .tile_panel import TilePanel
 
 
 __all__ = [
@@ -24,5 +25,6 @@ __all__ = [
     'LayerPanel',
     'StoragePanel',
     'CharacterSheetPanel',
-    'JournalPanel'
+    'JournalPanel',
+    'TilePanel'
 ]
