@@ -29,6 +29,7 @@ from .panels import (
     StoragePanel,
     CharacterSheetPanel,
     JournalPanel,
+    TilePanel,
 )    
 
 # Import external windows
@@ -55,6 +56,7 @@ class GuiPanel(Enum):
     STORAGE = "storage"
     CHARACTER_SHEET = "character_sheet"
     JOURNAL = "journal"
+    TILES = "tiles"
     
 
 
@@ -110,6 +112,7 @@ class SimplifiedGui:
             GuiPanel.STORAGE: StoragePanel(context, self.actions_bridge),
             GuiPanel.CHARACTER_SHEET: CharacterSheetPanel(context, self.actions_bridge),
             GuiPanel.JOURNAL: JournalPanel(context, self.actions_bridge),
+            GuiPanel.TILES: TilePanel(context, self.actions_bridge),
         }
         
         # Expose character sheet panel for cross-panel communication
@@ -117,6 +120,9 @@ class SimplifiedGui:
         
         # Expose journal panel for cross-panel communication
         self.context.journal_panel = self.panel_instances[GuiPanel.JOURNAL]
+        
+        # Expose tile panel for cross-panel communication
+        self.context.tile_panel = self.panel_instances[GuiPanel.TILES]
         
         # Initialize external windows
         self.external_windows = []
@@ -336,7 +342,7 @@ class SimplifiedGui:
             available_panels = []
             for panel_type in [GuiPanel.CHAT, GuiPanel.ENTITIES, GuiPanel.DEBUG, 
                              GuiPanel.NETWORK, GuiPanel.COMPENDIUM, GuiPanel.STORAGE,
-                             GuiPanel.CHARACTER_SHEET, GuiPanel.JOURNAL]:
+                             GuiPanel.CHARACTER_SHEET, GuiPanel.JOURNAL, GuiPanel.TILES]:
                 panel_name = panel_type.value
                 if self.actions_bridge.can_access_panel(panel_name):
                     available_panels.append(panel_type)

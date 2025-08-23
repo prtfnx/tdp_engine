@@ -640,7 +640,8 @@ class GuiActionsBridge:
             'entities',      # Entities panel must be hidden
             'compendium',  # Compendium panel must be hidden
             'layers',      # Layers panel must be hidden full
-            'table'       # Table panel must be full hidden
+            'table',       # Table panel must be full hidden
+            'tiles'        # Tiles panel must be hidden (GM only)
         ]
         
         # Allow access if not in restricted list
