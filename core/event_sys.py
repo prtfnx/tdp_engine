@@ -346,6 +346,21 @@ def handle_mouse_button_down(cnt, event):
             logger.debug("Fog of war tool consumed mouse down event")
             return  # Tool consumed the event
 
+    # Handle tile system mouse events
+    if hasattr(cnt, 'tile_panel') and cnt.tile_panel:
+        # Convert screen coordinates to world coordinates
+        if cnt.current_table:
+            table_scale = getattr(cnt.current_table, 'table_scale', 1.0)
+            viewport_x = getattr(cnt.current_table, 'viewport_x', 0.0)
+            viewport_y = getattr(cnt.current_table, 'viewport_y', 0.0)
+            
+            world_x = viewport_x + (event.button.x / table_scale)
+            world_y = viewport_y + (event.button.y / table_scale)
+            
+            if cnt.tile_panel.handle_mouse_click(world_x, world_y, event.button.button):
+                logger.debug("Tile panel consumed mouse down event")
+                return  # Tile panel consumed the event
+
     if event.button.button == 1:  # Left mouse button
         # Create the point for mouse position
         point = sdl3.SDL_FPoint()
