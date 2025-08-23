@@ -841,18 +841,13 @@ def handle_mouse_wheel(cnt, event):
         if hasattr(cnt.current_table, 'zoom_table'):
             cnt.current_table.zoom_table(1.1)  # Zoom in by 10%
             logger.debug("Table zoom increased, new scale: %s", cnt.current_table.table_scale)
-        else:
-            # Fallback to legacy system
-            cnt.current_table.change_scale(0.1)
-            logger.debug("Table scale increased and now: %s", cnt.current_table.scale)
+
     elif event.wheel.y < 0:
         # Use new coordinate system for zooming if available
         if hasattr(cnt.current_table, 'zoom_table'):
             cnt.current_table.zoom_table(0.9)  # Zoom out by 10%
             logger.debug("Table zoom decreased, new scale: %s", cnt.current_table.table_scale)
-        else:
-            # Fallback to legacy system
-            cnt.current_table.change_scale(-0.1)
+
 
 def handle_event(cnt, event):
     # First check if paint system should handle the event
