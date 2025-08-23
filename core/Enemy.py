@@ -5,8 +5,9 @@ from ctypes import c_float
 from core.actions_protocol import Position
 import sdl3
 import uuid
+import math
 from tools.logger import setup_logger
-logger = setup_logger(__name__)
+logger = setup_logger(__name__, level="INFO")
 
 HEALTH_FOR_FLEE = 20
 TIME_FOR_SEARCHING = 5000
@@ -24,6 +25,7 @@ class EnemyState(Enum):
     FLEEING = auto()
 
 class Enemy:
+    
     def __init__(self, name, health, damage, coord_x = 500.0, coord_y = 500.0):
         self.name = name
         self.health: int = health
@@ -49,6 +51,7 @@ class Enemy:
         self.sprite_move_atlas: str = ""
         self.sprite_attack_atlas: str = ""
         self.last_known_player_position: Optional[Position] = None
+        self.context = None
 
     def prepare(self):
         for sprite in self.dict_of_sprites.values():
@@ -75,27 +78,64 @@ class Enemy:
         self.coord_x.value = x
         self.coord_y.value = y
 
-    def attack(self, target):
+    def angle_to_player(self, player) -> float:
+        dx = player.coord_x.value - self.coord_x.value
+        dy = player.coord_y.value - self.coord_y.value
+        return (dx, dy)
+
+    def attack(self):
         # projectile or melee attack
         pass
 
-    def move(self):
-        logger.debug(f"Enemy {self.name} moving from ({self.coord_x.value}, {self.coord_y.value}) with speed ({self.speed_x}, {self.speed_y}) and speed factor {self.speed}")
-        self.coord_x.value += self.speed_x*self.speed
-        self.coord_y.value += self.speed_y*self.speed
+    def move(self, dt):
+        logger.debug(f"Enemy {self.name} moving from ({self.coord_x.value}, {self.coord_y.value}) with speed ({self.speed_x}, ")
+        self.coord_x.value += self.speed_x*dt
+        self.coord_y.value += self.speed_y*dt
         logger.debug(f"Enemy {self.name} moved to ({self.coord_x.value}, {self.coord_y.value})")
     def try_find_player(self, cast_ray,  player, obstacles_np) -> bool:
        """Cast ray to player and check obstacles"""
        #TODO implement proper system for rays and checks in group, for now dirty hack
-       finded= cast_ray(self.sprite.frect, player.sprite.frect, obstacles_np, self.vision_distance, threshold= 100.0)      
-       logger.debug(f"Enemy {self.name} trying to find player: {finded}")       
+       finded = cast_ray(self.sprite.frect, player.sprite.frect, obstacles_np, self.vision_distance)
+       logger.debug(f"Enemy {self.name} trying to find player: {finded}")
        if finded:
            self.last_known_player_position = Position(player.coord_x.value, player.coord_y.value)
        return finded
 
     
-    def update(self, cast_ray,player, obstacles_np):
+    def distance_to_player_sprite(self, player) -> float:
+        """
+        Returns the shortest distance between any point on enemy.sprite.frect and any point on player.sprite.frect.
+        """
+        if not hasattr(self, 'sprite') or not hasattr(player, 'sprite'):
+            return float('inf')
+        ef = self.sprite.frect
+        pf = player.sprite.frect
+        # Use coord_x, coord_y and original_w, original_h for both
+        ex1 = self.coord_x.value
+        ey1 = self.coord_y.value
+        ex2 = ex1 + getattr(ef, 'original_w', ef.w)
+        ey2 = ey1 + getattr(ef, 'original_h', ef.h)
+        px1 = player.coord_x.value
+        py1 = player.coord_y.value
+        px2 = px1 + getattr(pf, 'original_w', pf.w)
+        py2 = py1 + getattr(pf, 'original_h', pf.h)
+        # Calculate horizontal and vertical distances
+        dx = max(px1 - ex2, ex1 - px2, 0)
+        dy = max(py1 - ey2, ey1 - py2, 0)
+        # If rectangles overlap, distance is zero
+        if dx == 0 and dy == 0:
+            return 0.0
+        return (dx ** 2 + dy ** 2) ** 0.5
+
+    def update(self, cast_ray,player,dt, obstacles_np):
         logger.debug(f"Updating enemy {self.name} at position ({self.coord_x.value}, {self.coord_y.value}) with health {self.health} in state {self.state}")
+        if hasattr(self, 'is_flipped') and self.last_known_player_position is not None:
+            if self.coord_x.value < self.last_known_player_position.x:
+                self.is_flipped = False
+                self.sprite.is_flipped = False
+            else:
+                self.is_flipped = True
+                self.sprite.is_flipped = True
         if self.health <= HEALTH_FOR_FLEE:
             self.set_state(EnemyState.FLEEING)
         else:
@@ -110,7 +150,7 @@ class Enemy:
                     else:
                         self.set_state(EnemyState.SEARCHING)
                 case EnemyState.SEARCHING:
-                    self.move()
+                    self.move(dt)
                     if self.try_find_player(cast_ray, player=player, obstacles_np=obstacles_np):
                         self.set_state(EnemyState.CHASING)
                     elif  sdl3.SDL_GetTicks() - self.timer_for_searching > TIME_FOR_SEARCHING:
@@ -121,9 +161,10 @@ class Enemy:
                     # Logic for patrolling
                     pass
                 case EnemyState.CHASING:
-                    self.move()
+                    self.move(dt)
                     if self.try_find_player(cast_ray,  player=player, obstacles_np=obstacles_np):
-                        distance=self.set_direction()
+                        self.set_direction()
+                        distance = self.distance_to_player_sprite(player)
                         logger.debug(f"Enemy {self.name} is chasing player, distance to player: {distance}, range for attack: {self.range_for_attack}")
                         if distance < self.range_for_attack:
                             self.set_state(EnemyState.ATTACKING)
@@ -132,8 +173,9 @@ class Enemy:
                 case EnemyState.ATTACKING:
                     if self.try_find_player(cast_ray, player=player, obstacles_np=obstacles_np):
                         # Logic to attack the player
-                        self.attack(player)
-                        distance=self.set_direction()
+                        self.attack()
+                        self.set_direction()
+                        distance = self.distance_to_player_sprite(player)
                         if distance > self.range_for_attack:
                             self.set_state(EnemyState.CHASING)
                     else:
