@@ -11,10 +11,14 @@ class Minotaur(Enemy):
         self.sprite_attack_atlas="resources/Minotaur_1/attack.json"
         self.save_path_to_sprites_and_atlases()
         self.dict_of_sounds = {
-            "idle": "resources/Minotaur_1/sounds/idle.wav",
-            "move": "resources/Minotaur_1/sounds/move.wav",
-            "attack": "resources/Minotaur_1/sounds/attack.wav"
+            "idle": "resources/sounds/minotaur/idle",
+            "move": "resources/sounds/minotaur/move",
+            "attack": "resources/sounds/minotaur/attack",
+            "pain": "resources/sounds/minotaur/pain"
         }
+        self.footstep_sounds_folder =["resources/sounds/minotaur/footsteps"]         
         self.speed = SPEED
         self.range_for_attack = 1
+        self.attack_cd = 500
         self.is_flipped = False
+        self.sounds ={}
