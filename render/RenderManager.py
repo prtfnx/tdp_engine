@@ -142,6 +142,10 @@ class RenderManager():
     def render_layer(self, layer: List[Union[Sprite, AnimatedSprite]], layer_name: Optional[str] = None, is_selected_layer: bool = True, context=None):
         """Render a single layer of sprites with optional transparency for non-selected layers"""
         
+        # Special handling for map layer - render tiles first
+        if layer_name == "map":
+            self._render_tile_layer(context)
+        
         # Special handling for fog_of_war layer - use stencil buffer approach
         if layer_name == "fog_of_war":
             table = getattr(context, 'current_table', None)
@@ -794,6 +798,45 @@ class RenderManager():
         
         # Render filled rectangle
         sdl3.SDL_RenderFillRect(self.renderer, ctypes.byref(rect_sdl))
+    
+    def _render_tile_layer(self, context=None):
+        """Render the tile layer using TileMapManager"""
+        if not context:
+            return
+        
+        # Get tile panel and tile map manager
+        tile_panel = getattr(context, 'tile_panel', None)
+        if not tile_panel:
+            return
+        
+        tile_map_manager = tile_panel.get_tile_map_manager()
+        if not tile_map_manager:
+            return
+        
+        # Get current table for viewport information
+        current_table = getattr(context, 'current_table', None)
+        if not current_table:
+            return
+        
+        # Get viewport information
+        viewport_x = getattr(current_table, 'viewport_x', 0.0)
+        viewport_y = getattr(current_table, 'viewport_y', 0.0)
+        table_scale = getattr(current_table, 'table_scale', 1.0)
+        
+        # Get screen area
+        screen_area = getattr(current_table, 'screen_area', None)
+        if screen_area:
+            _, _, viewport_width, viewport_height = screen_area
+        else:
+            # Fallback to window size
+            w_ptr = ctypes.c_int()
+            h_ptr = ctypes.c_int()
+            sdl3.SDL_GetWindowSize(self.window, ctypes.byref(w_ptr), ctypes.byref(h_ptr))
+            viewport_width = float(w_ptr.value)
+            viewport_height = float(h_ptr.value)
+        
+        # Render tiles
+        tile_map_manager.render_tiles(viewport_x, viewport_y, viewport_width, viewport_height, table_scale)
     
     def reset_fog_texture(self):
         """Reset the cached fog texture to force rebuild on next render"""
