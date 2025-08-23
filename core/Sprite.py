@@ -44,6 +44,7 @@ class Sprite:
         self.coord_y: ctypes.c_float = ctypes.c_float(coord_y)  
         self.rect: sdl3.SDL_Rect = sdl3.SDL_Rect()
         self.frect: sdl3.SDL_FRect = sdl3.SDL_FRect()
+        self.screen_frect: sdl3.SDL_FRect = sdl3.SDL_FRect()
 
         # Initialize dimensions to prevent access violations
         self.original_w: float = 0.0
