@@ -153,6 +153,10 @@ def SDL_AppInit_func() -> Context:
             sound_folder = "resources/sounds/pistol_shot"
             mp3_files = [f for f in os.listdir(sound_folder) if f.endswith(".wav")]
             game_context.GunshotSounds = [sdl3.Mix_LoadWAV(os.path.join(sound_folder, path).encode()) for path in mp3_files]
+            # TODO - music manager and store it here
+            player_steps_folder= "resources/sounds/player/footsteps_floor"
+            game_context.player_steps = [sdl3.Mix_LoadWAV(os.path.join(player_steps_folder, path).encode()) for path in os.listdir(player_steps_folder) if path.endswith(".wav")]            
+            game_context.minotaur_steps = [sdl3.Mix_LoadWAV(os.path.join(minotaur_steps_folder, path).encode()) for path in os.listdir(minotaur_steps_folder) if path.endswith(".wav")]
         except Exception as e:
             logger.error(f"Failed to initialize audio: {e}")    
     # Initialize LayoutManager 
@@ -267,9 +271,10 @@ def SDL_AppInit_func() -> Context:
     # Initialize Enemy manager
     try:
         game_context.EnemyManager = EnemyManager()
+        game_context.EnemyManager.context = game_context
         logger.info("EnemyManager initialized.")
         mage1 = game_context.EnemyManager.add_enemy('Mage_1')
-        minotaur1 = game_context.EnemyManager.add_enemy('Minotaur')
+        minotaur1 = game_context.EnemyManager.add_enemy('Minotaur')        
         i=0
         for enemy in game_context.EnemyManager.enemies:            
             #order [idle,walk, attack] #TODO - proper system for managment for enemies
@@ -357,8 +362,8 @@ def SDL_AppIterate(context):
     # Render paint system if active (in table area)
     if PaintManager.is_paint_mode_active():
         PaintManager.render_paint_system()
-        # Enemy logic    
-    context.EnemyManager.update(context.player, context.RenderManager.obstacles_np)    
+    # Enemy logic    
+    context.EnemyManager.update(context.player, context.RenderManager.obstacles_np, delta_time)    
     # Async event queue for network and io   
     if context.AssetManager and context.Actions:
         completed = context.AssetManager.process_all_completed_operations()        
