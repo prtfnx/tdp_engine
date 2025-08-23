@@ -18,12 +18,14 @@ class EnemyManager:
         self.player = None
         # interface for cast ray:
         self.cast_ray = None
+        self.context = None
 
     def add_enemy(self, enemy):
         if enemy in self.ENEMY_TYPE_MAP.keys():
             enemy_object = self.ENEMY_TYPE_MAP[enemy]()
             self.enemies.append(enemy_object)
             logger.info(f"Added enemy: {enemy_object}")
+            enemy_object.context = self.context
         else:
             logger.error(f"Failed to add enemy: {enemy}")
             raise ValueError(f"Enemy type '{enemy}' is not recognized.")
@@ -31,9 +33,9 @@ class EnemyManager:
         for enemy in self.enemies:
             enemy.prepare()
 
-    def update(self, player, obstacles_np):
+    def update(self, player, obstacles_np, dt):
         for enemy in self.enemies:
-            enemy.update(self.cast_ray, player, obstacles_np)
+            enemy.update(self.cast_ray, player, dt, obstacles_np)
 
     def create_enemy(self, enemy_type) -> Enemy | None:
         if enemy_class := self.ENEMY_TYPE_MAP.get(enemy_type):
