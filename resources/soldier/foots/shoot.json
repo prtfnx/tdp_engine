@@ -1,0 +1,87 @@
+{
+  "frames": {
+    "survivor-shoot_handgun_0.png": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 255,
+        "h": 215
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 255,
+        "h": 215
+      },
+      "sourceSize": {
+        "w": 255,
+        "h": 215
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "survivor-shoot_handgun_1.png": {
+      "frame": {
+        "x": 255,
+        "y": 0,
+        "w": 255,
+        "h": 215
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 255,
+        "h": 215
+      },
+      "sourceSize": {
+        "w": 255,
+        "h": 215
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "survivor-shoot_handgun_2.png": {
+      "frame": {
+        "x": 510,
+        "y": 0,
+        "w": 255,
+        "h": 215
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 255,
+        "h": 215
+      },
+      "sourceSize": {
+        "w": 255,
+        "h": 215
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    }
+  },
+  "meta": {
+    "app": "http://free-tex-packer.com",
+    "version": "0.6.7",
+    "image": "shoot.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 765,
+      "h": 215
+    },
+    "scale": 1
+  }
+}

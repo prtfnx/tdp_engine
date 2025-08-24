@@ -1,0 +1,32 @@
+{
+  "name": "test_map",
+  "grid_size": 32,
+  "width": 50,
+  "height": 50,
+  "tiles": {
+    "0,0": {
+      "tileset_name": "craftpix_Ground_rocks",
+      "tile_id": 0,
+      "map_x": 0,
+      "map_y": 0,
+      "world_x": 0.0,
+      "world_y": 0.0
+    },
+    "1,0": {
+      "tileset_name": "craftpix_Ground_rocks",
+      "tile_id": 1,
+      "map_x": 1,
+      "map_y": 0,
+      "world_x": 32.0,
+      "world_y": 0.0
+    },
+    "0,1": {
+      "tileset_name": "craftpix_Ground_rocks",
+      "tile_id": 2,
+      "map_x": 0,
+      "map_y": 1,
+      "world_x": 0.0,
+      "world_y": 32.0
+    }
+  }
+}

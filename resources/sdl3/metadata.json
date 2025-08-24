@@ -1,0 +1,20 @@
+{
+    "arch": "AMD64",
+    "system": "Windows",
+    "target": "v0.9.8b8",
+    "version": "v3.2.18",
+    "url": "https://github.com/Aermoss/PySDL3-Build/releases/download/v3.2.18/Windows-AMD64-v3.2.18.zip",
+    "created": "2025-07-23T16:14:39Z",
+    "updated": "2025-07-23T16:14:39Z",
+    "uploader": "Aermoss",
+    "files": [
+        "./SDL3.dll",
+        "./SDL3_image.dll",
+        "./SDL3_mixer.dll",
+        "./SDL3_net.dll",
+        "./SDL3_rtf.dll",
+        "./SDL3_ttf.dll"
+    ],
+    "repair": true,
+    "find": true
+}

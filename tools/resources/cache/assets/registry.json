@@ -1,0 +1,68 @@
+{
+  "1aeb5857b9cd3b50": {
+    "asset_id": "1aeb5857b9cd3b50",
+    "filename": "map.jpg",
+    "local_path": "C:\\Users\\fenix\\Documents\\code\\tdp_engine\\tools\\resources\\assets\\map.jpg",
+    "cached_at": 1755623473.1961792,
+    "source": "imported",
+    "original_path": "resources\\map.jpg",
+    "file_size": 417205,
+    "xxhash": "1aeb5857b9cd3b50",
+    "hash_verified": true
+  },
+  "77b988597c23a6b6": {
+    "asset_id": "77b988597c23a6b6",
+    "filename": "woman.png",
+    "local_path": "C:\\Users\\fenix\\Documents\\code\\tdp_engine\\tools\\resources\\assets\\woman.png",
+    "cached_at": 1755623473.2001827,
+    "source": "imported",
+    "original_path": "resources\\woman.png",
+    "file_size": 340992,
+    "xxhash": "77b988597c23a6b6",
+    "hash_verified": true
+  },
+  "fb6ebb5cbebf4402": {
+    "asset_id": "fb6ebb5cbebf4402",
+    "filename": "token_1.png",
+    "local_path": "C:\\Users\\fenix\\Documents\\code\\tdp_engine\\tools\\resources\\assets\\token_1.png",
+    "cached_at": 1755623473.202184,
+    "source": "imported",
+    "original_path": "resources\\token_1.png",
+    "file_size": 79265,
+    "xxhash": "fb6ebb5cbebf4402",
+    "hash_verified": true
+  },
+  "0d80100e92e7326f": {
+    "asset_id": "0d80100e92e7326f",
+    "filename": "test.gif",
+    "local_path": "C:\\Users\\fenix\\Documents\\code\\tdp_engine\\tools\\resources\\assets\\test.gif",
+    "cached_at": 1755623473.2031853,
+    "source": "imported",
+    "original_path": "resources\\test.gif",
+    "file_size": 441840,
+    "xxhash": "0d80100e92e7326f",
+    "hash_verified": true
+  },
+  "9e735d927287e399": {
+    "asset_id": "9e735d927287e399",
+    "filename": "wall1.png",
+    "local_path": "C:\\Users\\fenix\\Documents\\code\\tdp_engine\\tools\\resources\\assets\\wall1.png",
+    "cached_at": 1755623473.2041862,
+    "source": "imported",
+    "original_path": "resources\\wall1.png",
+    "file_size": 1431316,
+    "xxhash": "9e735d927287e399",
+    "hash_verified": true
+  },
+  "f5d34eb945f11471": {
+    "asset_id": "f5d34eb945f11471",
+    "filename": "player1.png",
+    "local_path": "C:\\Users\\fenix\\Documents\\code\\tdp_engine\\tools\\resources\\assets\\player1.png",
+    "cached_at": 1755623473.2051876,
+    "source": "imported",
+    "original_path": "resources\\player1.png",
+    "file_size": 104618,
+    "xxhash": "f5d34eb945f11471",
+    "hash_verified": true
+  }
+}

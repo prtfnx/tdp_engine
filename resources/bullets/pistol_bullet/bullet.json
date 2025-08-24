@@ -1,0 +1,183 @@
+{
+  "frames": {
+    "Pistol-AR7.png": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 12,
+        "h": 6
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 24,
+        "y": 6,
+        "w": 12,
+        "h": 6
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 64
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "Pistol-AR5.png": {
+      "frame": {
+        "x": 12,
+        "y": 0,
+        "w": 5,
+        "h": 8
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 28,
+        "y": 6,
+        "w": 5,
+        "h": 8
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 64
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "Pistol-AR6.png": {
+      "frame": {
+        "x": 0,
+        "y": 6,
+        "w": 5,
+        "h": 4
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 28,
+        "y": 5,
+        "w": 5,
+        "h": 4
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 64
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "Pistol-AR3.png": {
+      "frame": {
+        "x": 5,
+        "y": 6,
+        "w": 3,
+        "h": 8
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 30,
+        "y": 41,
+        "w": 3,
+        "h": 8
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 64
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "Pistol-AR1.png": {
+      "frame": {
+        "x": 8,
+        "y": 6,
+        "w": 3,
+        "h": 7
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 30,
+        "y": 46,
+        "w": 3,
+        "h": 7
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 64
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "Pistol-AR4.png": {
+      "frame": {
+        "x": 0,
+        "y": 10,
+        "w": 3,
+        "h": 7
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 30,
+        "y": 23,
+        "w": 3,
+        "h": 7
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 64
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "Pistol-AR2.png": {
+      "frame": {
+        "x": 0,
+        "y": 17,
+        "w": 3,
+        "h": 5
+      },
+      "rotated": false,
+      "trimmed": true,
+      "spriteSourceSize": {
+        "x": 30,
+        "y": 46,
+        "w": 3,
+        "h": 5
+      },
+      "sourceSize": {
+        "w": 64,
+        "h": 64
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    }
+  },
+  "meta": {
+    "app": "http://free-tex-packer.com",
+    "version": "0.6.7",
+    "image": "bullet.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 17,
+      "h": 22
+    },
+    "scale": 1
+  }
+}

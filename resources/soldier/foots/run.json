@@ -1,0 +1,495 @@
+{
+  "frames": {
+    "run/survivor-run_0.png": {
+      "frame": {
+        "x": 0,
+        "y": 0,
+        "w": 204,
+        "h": 124
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 204,
+        "h": 124
+      },
+      "sourceSize": {
+        "w": 204,
+        "h": 124
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "run/survivor-run_1.png": {
+      "frame": {
+        "x": 204,
+        "y": 0,
+        "w": 204,
+        "h": 124
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 204,
+        "h": 124
+      },
+      "sourceSize": {
+        "w": 204,
+        "h": 124
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "run/survivor-run_10.png": {
+      "frame": {
+        "x": 408,
+        "y": 0,
+        "w": 204,
+        "h": 124
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 204,
+        "h": 124
+      },
+      "sourceSize": {
+        "w": 204,
+        "h": 124
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "run/survivor-run_11.png": {
+      "frame": {
+        "x": 612,
+        "y": 0,
+        "w": 204,
+        "h": 124
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 204,
+        "h": 124
+      },
+      "sourceSize": {
+        "w": 204,
+        "h": 124
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "run/survivor-run_12.png": {
+      "frame": {
+        "x": 816,
+        "y": 0,
+        "w": 204,
+        "h": 124
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 204,
+        "h": 124
+      },
+      "sourceSize": {
+        "w": 204,
+        "h": 124
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "run/survivor-run_13.png": {
+      "frame": {
+        "x": 1020,
+        "y": 0,
+        "w": 204,
+        "h": 124
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 204,
+        "h": 124
+      },
+      "sourceSize": {
+        "w": 204,
+        "h": 124
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "run/survivor-run_14.png": {
+      "frame": {
+        "x": 1224,
+        "y": 0,
+        "w": 204,
+        "h": 124
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 204,
+        "h": 124
+      },
+      "sourceSize": {
+        "w": 204,
+        "h": 124
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "run/survivor-run_15.png": {
+      "frame": {
+        "x": 1428,
+        "y": 0,
+        "w": 204,
+        "h": 124
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 204,
+        "h": 124
+      },
+      "sourceSize": {
+        "w": 204,
+        "h": 124
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "run/survivor-run_16.png": {
+      "frame": {
+        "x": 1632,
+        "y": 0,
+        "w": 204,
+        "h": 124
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 204,
+        "h": 124
+      },
+      "sourceSize": {
+        "w": 204,
+        "h": 124
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "run/survivor-run_17.png": {
+      "frame": {
+        "x": 1836,
+        "y": 0,
+        "w": 204,
+        "h": 124
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 204,
+        "h": 124
+      },
+      "sourceSize": {
+        "w": 204,
+        "h": 124
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "run/survivor-run_18.png": {
+      "frame": {
+        "x": 0,
+        "y": 124,
+        "w": 204,
+        "h": 124
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 204,
+        "h": 124
+      },
+      "sourceSize": {
+        "w": 204,
+        "h": 124
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "run/survivor-run_19.png": {
+      "frame": {
+        "x": 204,
+        "y": 0,
+        "w": 204,
+        "h": 124
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 204,
+        "h": 124
+      },
+      "sourceSize": {
+        "w": 204,
+        "h": 124
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "run/survivor-run_9.png": {
+      "frame": {
+        "x": 612,
+        "y": 0,
+        "w": 204,
+        "h": 124
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 204,
+        "h": 124
+      },
+      "sourceSize": {
+        "w": 204,
+        "h": 124
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "run/survivor-run_8.png": {
+      "frame": {
+        "x": 816,
+        "y": 0,
+        "w": 204,
+        "h": 124
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 204,
+        "h": 124
+      },
+      "sourceSize": {
+        "w": 204,
+        "h": 124
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "run/survivor-run_7.png": {
+      "frame": {
+        "x": 1020,
+        "y": 0,
+        "w": 204,
+        "h": 124
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 204,
+        "h": 124
+      },
+      "sourceSize": {
+        "w": 204,
+        "h": 124
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "run/survivor-run_6.png": {
+      "frame": {
+        "x": 1224,
+        "y": 0,
+        "w": 204,
+        "h": 124
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 204,
+        "h": 124
+      },
+      "sourceSize": {
+        "w": 204,
+        "h": 124
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "run/survivor-run_5.png": {
+      "frame": {
+        "x": 1428,
+        "y": 0,
+        "w": 204,
+        "h": 124
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 204,
+        "h": 124
+      },
+      "sourceSize": {
+        "w": 204,
+        "h": 124
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "run/survivor-run_4.png": {
+      "frame": {
+        "x": 1632,
+        "y": 0,
+        "w": 204,
+        "h": 124
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 204,
+        "h": 124
+      },
+      "sourceSize": {
+        "w": 204,
+        "h": 124
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "run/survivor-run_3.png": {
+      "frame": {
+        "x": 1836,
+        "y": 0,
+        "w": 204,
+        "h": 124
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 204,
+        "h": 124
+      },
+      "sourceSize": {
+        "w": 204,
+        "h": 124
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    },
+    "run/survivor-run_2.png": {
+      "frame": {
+        "x": 0,
+        "y": 124,
+        "w": 204,
+        "h": 124
+      },
+      "rotated": false,
+      "trimmed": false,
+      "spriteSourceSize": {
+        "x": 0,
+        "y": 0,
+        "w": 204,
+        "h": 124
+      },
+      "sourceSize": {
+        "w": 204,
+        "h": 124
+      },
+      "pivot": {
+        "x": 0.5,
+        "y": 0.5
+      }
+    }
+  },
+  "meta": {
+    "app": "http://free-tex-packer.com",
+    "version": "0.6.7",
+    "image": "run.png",
+    "format": "RGBA8888",
+    "size": {
+      "w": 2040,
+      "h": 248
+    },
+    "scale": 1
+  }
+}
