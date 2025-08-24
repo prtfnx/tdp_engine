@@ -39,6 +39,7 @@ PYINSTALLER_OPTS = [
     # Treat SDL runtime DLLs as binaries so PyInstaller handles them as native libs.
     # Use --add-binary for the folder containing the SDL DLLs.
     f"--add-binary=resources/sdl3{os.pathsep}sdl3/bin",
+    f"--add-binary=/usr/lib/x86_64-linux-gnu/libpython3.12.so.1.0:_internal"
     # Useful debug switch: disable UPX to avoid potential DLL performance/corruption issues
     # "--noupx",
 ]
@@ -48,7 +49,7 @@ def copy_resources():
     for folder in ASSET_FOLDERS:
         src = os.path.join(PROJECT_ROOT, folder)
         # Place resources next to the internal in the onedir layout
-        dst = os.path.join(DIST_DIR, "main\_internal", folder)
+        dst = os.path.join(DIST_DIR, "main", "_internal", folder)
         if os.path.exists(src):
             try:
                 if os.path.exists(dst):
