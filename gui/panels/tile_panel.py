@@ -52,7 +52,7 @@ class TilePanel:
             # Initialize TileManager
             try:
                 logger.info("Initializing TileManager...")
-                self.context.TileManager = TileManager(game_context)
+                self.context.TileManager = TileManager(self.context)
             except Exception as e:
                 logger.error(f"Failed to initialize TileManager: {e}")
             
