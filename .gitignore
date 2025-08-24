@@ -10,5 +10,8 @@ venv/
 .coverage
 pytest_cache/
 
-resources/*
-assets/light.png
+assets/*
+build/*
+dist/*
+tdp_engine.code-workspace
+
