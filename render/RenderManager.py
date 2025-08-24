@@ -804,18 +804,15 @@ class RenderManager():
         if not context:
             return
         
-        # Get tile panel and tile map manager
-        tile_panel = getattr(context, 'tile_panel', None)
-        if not tile_panel:
-            return
-        
-        tile_map_manager = tile_panel.get_tile_map_manager()
+        tile_map_manager = context.TileMapManager
         if not tile_map_manager:
+            logger.error(f"Tile map manager not found in tile panel")
             return
         
         # Get current table for viewport information
         current_table = getattr(context, 'current_table', None)
         if not current_table:
+            logger.error(f"Current table not found in context")
             return
         
         # Get viewport information
