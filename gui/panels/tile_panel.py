@@ -48,10 +48,10 @@ class TilePanel:
         """Initialize tile system components"""
         try:
             from core.TileManager import TileManager
-            from core.TileMapManager import TileMapManager
             
-            self.tile_manager = TileManager(self.context)
-            self.tile_map_manager = TileMapManager(self.context, self.tile_manager)
+            
+            self.tile_manager = self.context.TileManager
+            self.tile_map_manager = self.context.TileMapManager
             
             # Set default tileset
             tilesets = self.tile_manager.get_tileset_names()
@@ -133,14 +133,14 @@ class TilePanel:
         if not self.selected_tileset:
             return
         
-        tiles = self.tile_manager.get_tiles(self.selected_tileset)
+        tiles = self.tile_manager.get_tiles(self.selected_tileset)        
         if not tiles:
             imgui.text("No tiles in selected tileset")
             return
         
         # Get tileset info for texture access
         tileset_info = self.tile_manager.get_tileset_info(self.selected_tileset)
-        if not tileset_info or not tileset_info.im_texture_ref:
+        if not tileset_info or not tileset_info.gl_texture_id:
             imgui.text("Tileset texture not available")
             return
         
@@ -171,19 +171,19 @@ class TilePanel:
             uv1_x = (tile.source_rect.x + tile.source_rect.w) / texture_width
             uv1_y = (tile.source_rect.y + tile.source_rect.h) / texture_height
             
-            # Highlight selected tile with border color
+            # TODO Highlight selected tile with border color
             is_selected = tile.tile_id == self.selected_tile_id
-            border_color = (0.2, 0.6, 1.0, 1.0) if is_selected else (0.0, 0.0, 0.0, 0.0)
+            tint =(1.0, 1.0, 0.0, 1.0)           
             
-            # Render image button with tile texture
+            tex_ref = imgui.ImTextureRef(tileset_info.gl_texture_id)
             clicked = imgui.image_button(
                 f"tile_{tile.tile_id}",
-                tileset_info.im_texture_ref,  # ImTextureRef for ImGui
+                tex_ref,
                 imgui.ImVec2(self.tile_button_size, self.tile_button_size),
                 imgui.ImVec2(uv0_x, uv0_y),
                 imgui.ImVec2(uv1_x, uv1_y),
                 imgui.ImVec4(1.0, 1.0, 1.0, 1.0),
-                imgui.ImVec4(*border_color),
+                imgui.ImVec4(*tint),
             )
             
             # Handle click
