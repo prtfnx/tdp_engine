@@ -12,10 +12,11 @@ def handle_event(cnt, event):
             return False
         case sdl3.SDL_EVENT_KEY_DOWN:
             if event.key.scancode == sdl3.SDL_SCANCODE_ESCAPE:
-                cnt.is_dm = True
+                cnt.is_gm = True
                 return True
             elif event.key.scancode == sdl3.SDL_SCANCODE_TAB:
                 cnt.debug_mode = not cnt.debug_mode
+                return True
             else:
                 try:
                     cnt.pressed_keys.add(event.key.scancode)

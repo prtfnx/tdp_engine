@@ -774,11 +774,11 @@ class Context:
         except Exception as e:
             logger.error(f"Error requesting network reconnection: {e}")
 
-    def play_background_music(self, music):
+    def play_background_music(self):
         """Play background music"""
         try:
             if not self.playing_music:
-                sdl3.Mix_PlayMusic(music, -1)  # Play indefinitely
+                sdl3.Mix_PlayMusic(self.music, -1)  # Play indefinitely
                 self.playing_music = True
         except Exception as e:
             logger.error(f"Error playing background music: {e}")
