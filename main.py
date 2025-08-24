@@ -159,6 +159,7 @@ def SDL_AppInit_func() -> Context:
             game_context.GunshotSounds = [sdl3.Mix_LoadWAV(os.path.join(sound_folder, path).encode()) for path in mp3_files]
             # TODO - music manager and store it here
             player_steps_folder= "resources/sounds/player/footsteps_floor"
+            minotaur_steps_folder= "resources/sounds/minotaur/footsteps"
             game_context.player_steps = [sdl3.Mix_LoadWAV(os.path.join(player_steps_folder, path).encode()) for path in os.listdir(player_steps_folder) if path.endswith(".wav")]            
             game_context.minotaur_steps = [sdl3.Mix_LoadWAV(os.path.join(minotaur_steps_folder, path).encode()) for path in os.listdir(minotaur_steps_folder) if path.endswith(".wav")]
         except Exception as e:
