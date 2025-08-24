@@ -32,8 +32,7 @@ from core.Actions import Actions
 from core.actions_protocol import Position
 from core.MovementManager import MovementManager
 from core.EnemyManager import EnemyManager
-from core.TileMapManager import TileMapManager
-from core.TileManager import TileManager
+
 # Render imports
 from render import PaintManager
 from render.RenderManager import RenderManager
@@ -311,18 +310,7 @@ def SDL_AppInit_func() -> Context:
         logger.error(f"Failed to initialize EnemyManager: {e}")
         game_context.EnemyManager = None
         raise(e)
-    # Initialize TileManager
-    try:
-        game_context.TileManager = TileManager(game_context)
-    except Exception as e:
-        logger.error(f"Failed to initialize TileManager: {e}")
-    
-    # Initialize TileMapManager
-    try:
-        game_context.TileMapManager = TileMapManager(game_context, game_context.TileManager)
-    except Exception as e:
-        logger.error(f"Failed to initialize TileMapManager: {e}")
-        game_context.TileMapManager = None
+   
 
     # Initialize RenderManager
     try:

@@ -20,6 +20,8 @@ if TYPE_CHECKING:
     from render.LightManager import LightManager
     from render.LayoutManager import LayoutManager
     from gui.gui_imgui import SimplifiedGui
+    from core.TileMapManager import TileMapManager
+    from core.TileManager import TileManager
     SDL_Renderer = c_void_p
     SDL_Window = c_void_p 
     SDL_GLContext = c_void_p
@@ -85,6 +87,8 @@ class Context:
         }
         
         # Time management
+        self.TileMapManager: Optional[TileMapManager] = None
+        self.TileManager: Optional[TileManager] = None
         self.last_time: float = 0
         self.current_time: float = 0     
 

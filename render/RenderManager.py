@@ -143,7 +143,7 @@ class RenderManager():
         """Render a single layer of sprites with optional transparency for non-selected layers"""
         
         # Special handling for map layer - render tiles first
-        if layer_name == "map":
+        if layer_name == "map" :
             self._render_tile_layer(context)
         
         # Special handling for fog_of_war layer - use stencil buffer approach
@@ -803,7 +803,10 @@ class RenderManager():
         """Render the tile layer using TileMapManager"""
         if not context:
             return
-        
+        if not context.TileMapManager or not context.TileManager:
+            #logger.warning(f"Tile map manager not found in tile panel")
+            return
+
         tile_map_manager = context.TileMapManager
         if not tile_map_manager:
             logger.error(f"Tile map manager not found in tile panel")

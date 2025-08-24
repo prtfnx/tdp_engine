@@ -48,8 +48,21 @@ class TilePanel:
         """Initialize tile system components"""
         try:
             from core.TileManager import TileManager
+            from core.TileMapManager import TileMapManager
+            # Initialize TileManager
+            try:
+                logger.info("Initializing TileManager...")
+                self.context.TileManager = TileManager(game_context)
+            except Exception as e:
+                logger.error(f"Failed to initialize TileManager: {e}")
             
-            
+            # Initialize TileMapManager
+            try:
+                logger.info("Initializing TileMapManager...")
+                self.context.TileMapManager = TileMapManager(self.context, self.context.TileManager)
+            except Exception as e:
+                logger.error(f"Failed to initialize TileMapManager: {e}")
+                self.context.TileMapManager = None
             self.tile_manager = self.context.TileManager
             self.tile_map_manager = self.context.TileMapManager
             
