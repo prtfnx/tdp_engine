@@ -21,9 +21,9 @@ class EnemyManager:
         self.context = None
         
 
-    def add_enemy(self, enemy):
+    def add_enemy(self, enemy, coord_x=0, coord_y=0):
         if enemy in self.ENEMY_TYPE_MAP.keys():
-            enemy_object = self.ENEMY_TYPE_MAP[enemy]()
+            enemy_object = self.ENEMY_TYPE_MAP[enemy](coord_x=coord_x, coord_y=coord_y)
             if hasattr(enemy_object, 'footstep_sounds_folder'):
                 enemy_object.footstep_sounds = [sdl3.Mix_LoadWAV(os.path.join(folder, path).encode()) for folder in enemy_object.footstep_sounds_folder for path in os.listdir(folder) if path.endswith(".wav")]
             for key, value in enemy_object.dict_of_sounds.items():
