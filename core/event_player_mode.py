@@ -11,13 +11,19 @@ def handle_event(cnt, event):
         case sdl3.SDL_EVENT_QUIT:
             return False
         case sdl3.SDL_EVENT_KEY_DOWN:
-            try:
-                cnt.pressed_keys.add(event.key.scancode)
-                update_player_acceleration(cnt)
+            if event.key.scancode == sdl3.SDL_SCANCODE_ESCAPE:
+                cnt.is_dm = True
                 return True
-            except Exception as e:
-                logger.error(f"Error handling key down: {e}")
-            return True
+            elif event.key.scancode == sdl3.SDL_SCANCODE_TAB:
+                cnt.debug_mode = not cnt.debug_mode
+            else:
+                try:
+                    cnt.pressed_keys.add(event.key.scancode)
+                    update_player_acceleration(cnt)
+                    return True
+                except Exception as e:
+                    logger.error(f"Error handling key down: {e}")
+                return True
         case sdl3.SDL_EVENT_KEY_UP:
             try:
                 cnt.pressed_keys.discard(event.key.scancode)
@@ -69,13 +75,11 @@ def handle_event(cnt, event):
 def update_player_acceleration(cnt):
     """Update player acceleration based on currently pressed keys."""
     # Define key mappings
-    #print(f'pressed keys: {cnt.pressed_keys}')
+    print(f'pressed keys: {cnt.pressed_keys}')
     up_keys = {sdl3.SDL_SCANCODE_W, sdl3.SDL_SCANCODE_UP}
     down_keys = {sdl3.SDL_SCANCODE_S, sdl3.SDL_SCANCODE_DOWN}
     left_keys = {sdl3.SDL_SCANCODE_A, sdl3.SDL_SCANCODE_LEFT}
     right_keys = {sdl3.SDL_SCANCODE_D, sdl3.SDL_SCANCODE_RIGHT}
-    ESC = sdl3.SDL_SCANCODE_ESCAPE
-    CNTR = sdl3.SDL_SCANCODE_LCTRL
     ax = 0
     ay = 0
     # Y axis: up is negative, down is positive
@@ -88,9 +92,5 @@ def update_player_acceleration(cnt):
         ax -= 1
     if cnt.pressed_keys & right_keys:
         ax += 1
-    #print(f'player name: {cnt.player.name} acceleration {cnt.player.acceleration_x}, {cnt.player.acceleration_y}, speed {cnt.player.speed_x}, {cnt.player.speed_y}')
+    print(f'player name: {cnt.player.name} acceleration {cnt.player.acceleration_x}, {cnt.player.acceleration_y}, speed {cnt.player.speed_x}, {cnt.player.speed_y}')
     cnt.player.set_acceleration(ax, ay)
-    if ESC in cnt.pressed_keys:
-        cnt.debug_mode = not cnt.debug_mode
-    if ESC in cnt.pressed_keys and CNTR in cnt.pressed_keys:
-        cnt.is_gm = not cnt.is_gm
