@@ -3,6 +3,7 @@ from multiprocessing import context
 import queue
 import time
 import uuid
+import sdl3
 from typing import Optional, Dict, List, Any, Union, TYPE_CHECKING
 from core.Actions import Actions
 from core.ContextTable import ContextTable
@@ -98,6 +99,9 @@ class Context:
         self.AssetManager: Optional[ClientAssetManager] = None
         self.RenderManager: Optional[RenderManager] = None
         # Note: StorageManager and DownloadManager are now owned by AssetManager
+        # Music
+        self.playing_music: bool = False
+        self.music_volume: float = 1.0
         # Network
         self.net_client_started: bool = False
         self.net_socket: Optional[Any] = None
@@ -117,7 +121,7 @@ class Context:
         
         # Protocol handlers
         self.protocol: Optional[Any] = None  # protocol handler
-          # GUI system
+        # GUI system
         self.imgui: Optional['SimplifiedGui'] = None     
         self.chat_messages: List[str] = []
         
@@ -770,7 +774,21 @@ class Context:
         except Exception as e:
             logger.error(f"Error requesting network reconnection: {e}")
 
+    def play_background_music(self, music):
+        """Play background music"""
+        try:
+            if not self.playing_music:
+                sdl3.Mix_PlayMusic(music, -1)  # Play indefinitely
+                self.playing_music = True
+        except Exception as e:
+            logger.error(f"Error playing background music: {e}")
 
-
-
+    def stop_background_music(self):
+        """Stop background music"""
+        try:
+            if self.playing_music:
+                sdl3.Mix_HaltMusic()
+                self.playing_music = False
+        except Exception as e:
+            logger.error(f"Error stopping background music: {e}")
 

@@ -123,8 +123,8 @@ def init_audio():
         music = sdl3.Mix_LoadMUS(b"resources/music/battle_music.mp3")
         if not music:
             logger.error(f"Failed to load music: {sdl3.SDL_GetError().decode()}")
-        else:
-            sdl3.Mix_PlayMusic(music, -1)  # Play indefinitely
+        
+           
     else:
         logger.error(f"Failed to open audio device: {sdl3.SDL_GetAudioDeviceName(sdl3.SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK).decode()}, error: {sdl3.SDL_GetError().decode()}.")
     return music, currentAudioDevice

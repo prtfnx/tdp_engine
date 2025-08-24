@@ -580,6 +580,8 @@ class GuiActionsBridge:
                         render_manager.set_layer_visibility(layer_name, True)
             else:
                 # Player mode - restrict to specific layers but keep fog_of_war visible
+                if not self.context.playing_music:
+                    self.context.play_background_music()
                 if hasattr(self.context, 'RenderManager') and self.context.RenderManager:
                     render_manager = self.context.RenderManager
                     # Hide most layers except tokens, light, and fog_of_war
