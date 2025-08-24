@@ -5,8 +5,8 @@ class Minotaur(Enemy):
         super().__init__(name="Minotaur", coord_x=coord_x, coord_y=coord_y, health=150, damage=25)
         self.sprite_idle_path="Minotaur_1/idle.png"
         self.sprite_idle_atlas="resources/Minotaur_1/idle.json"
-        self.sprite_move_path="Minotaur_1/Walk.png"
-        self.sprite_move_atlas="resources/Minotaur_1/Walk.json"
+        self.sprite_move_path="Minotaur_1/walk.png"
+        self.sprite_move_atlas="resources/Minotaur_1/walk.json"
         self.sprite_attack_path="Minotaur_1/attack.png"
         self.sprite_attack_atlas="resources/Minotaur_1/attack.json"
         self.save_path_to_sprites_and_atlases()
