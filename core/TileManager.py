@@ -7,6 +7,11 @@ import json
 import sdl3
 import ctypes
 from typing import Dict, List, Tuple, Optional, Any
+from OpenGL.GL import (
+    glGenTextures, glBindTexture, glTexImage2D, glTexParameteri, glPixelStorei, glGetError,
+    GL_TEXTURE_2D, GL_RGBA, GL_UNSIGNED_BYTE, GL_LINEAR, glDeleteTextures,
+    GL_UNPACK_ALIGNMENT, GL_UNPACK_ROW_LENGTH, GL_TEXTURE_MIN_FILTER, GL_TEXTURE_MAG_FILTER
+)
 from dataclasses import dataclass
 from tools.logger import setup_logger
 
@@ -22,7 +27,8 @@ class TilesetInfo:
     tiles_per_row: int = 10
     total_tiles: int = 0
     texture: Optional[Any] = None  # SDL_Texture
-        im_texture_ref: Optional[Any] = None  # ImGui ImTextureRef
+    gl_texture_id: Optional[int] = None  # OpenGL texture ID
+
 
 @dataclass
 class TileInfo:
@@ -72,36 +78,84 @@ class TileManager:
     def _load_tileset(self, name: str, path: str, tile_width: int = 32, tile_height: int = 32, tiles_per_row: int = 10):
         """Load a tileset from file"""
         try:
-            # Load texture directly using SDL3
-            texture = None
-            
-            # Use IMG_Load for loading various image formats (PNG, JPG, etc.)
-            surface = sdl3.IMG_Load(path.encode())
-            if surface:
-                texture = sdl3.SDL_CreateTextureFromSurface(self.renderer, surface)
-                sdl3.SDL_DestroySurface(surface)
-            
-            if not texture:
-                logger.error(f"Failed to load tileset texture: {path}")
+            # Load image as SDL_Surface using pysdl3
+            surface = sdl3.IMG_Load(ctypes.c_char_p(path.encode()))
+            if not surface:
+                logger.error(f"Failed to load tileset surface: {path}")
                 return
-            
-            # Get texture dimensions using SDL3 GetTextureSize
-            w_ptr = ctypes.c_float()
-            h_ptr = ctypes.c_float()
-            
-            if not sdl3.SDL_GetTextureSize(texture, ctypes.byref(w_ptr), ctypes.byref(h_ptr)):
-                logger.error(f"Failed to query texture dimensions for: {path}")
+
+            # Create SDL_Texture for map rendering
+            texture = sdl3.SDL_CreateTextureFromSurface(self.renderer, surface)
+            if not texture:
+                logger.error(f"Failed to create SDL_Texture from surface: {path}")
+                sdl3.SDL_DestroySurface(surface)
+                return
+
+            # --- OpenGL texture creation for ImGui panel preview ---
+
+            surf = surface[0]
+            width = surf.w
+            height = surf.h
+            pitch = surf.pitch
+            try:
+                pixel_data = ctypes.string_at(surf.pixels, pitch * height)
+            except Exception as e:
+                logger.error(f"Tileset '{name}': Failed to convert surface pixels to buffer: {e}. Aborting tileset loading.")
+                sdl3.SDL_DestroySurface(surface)
                 sdl3.SDL_DestroyTexture(texture)
                 return
-            
-            texture_width = int(w_ptr.value)
-            texture_height = int(h_ptr.value)
-            
+            # Use SDL3/pysdl3 API to get BytesPerPixel safely
+            try:
+                # surface.format is an integer pixel format enum
+                bpp = sdl3.SDL_BYTESPERPIXEL(surf.format)
+                print(f'DEBUG: BytesPerPixel value from SDL_BYTESPERPIXEL: {bpp}')
+                if bpp <= 0 or bpp > 8:
+                    logger.error(f"Tileset '{name}': BytesPerPixel value is invalid ({bpp}). Aborting tileset loading.")
+                    sdl3.SDL_DestroySurface(surface)
+                    sdl3.SDL_DestroyTexture(texture)
+                    return
+            except Exception as e:
+                logger.error(f"Tileset '{name}': Exception accessing BytesPerPixel via SDL3 API: {e}. Aborting tileset loading.")
+                sdl3.SDL_DestroySurface(surface)
+                sdl3.SDL_DestroyTexture(texture)
+                return
+            # Determine alignment (largest power of 2 divisor of pitch, up to 8)
+            alignment = 8
+            while pitch % alignment != 0 and alignment > 1:
+                alignment //= 2
+            glPixelStorei(GL_UNPACK_ALIGNMENT, alignment)
+
+            # Set row length if needed
+            expected_pitch = width * bpp
+            if pitch != expected_pitch:
+                glPixelStorei(GL_UNPACK_ROW_LENGTH, pitch // bpp)
+            else:
+                glPixelStorei(GL_UNPACK_ROW_LENGTH, 0)
+
+            # Choose format (assume RGBA)
+            pixel_format = GL_RGBA
+            internal_format = GL_RGBA
+            pixel_type = GL_UNSIGNED_BYTE
+
+            # Generate OpenGL texture
+            texture_id = glGenTextures(1)
+            glBindTexture(GL_TEXTURE_2D, texture_id)
+            glTexImage2D(GL_TEXTURE_2D, 0, internal_format, width, height, 0, pixel_format, pixel_type, pixel_data)
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR)
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR)
+
+            # Reset pixel store
+            glPixelStorei(GL_UNPACK_ALIGNMENT, 4)
+            glPixelStorei(GL_UNPACK_ROW_LENGTH, 0)
+
+            # Destroy SDL_Surface (no longer needed)
+            sdl3.SDL_DestroySurface(surface)
+
             # Calculate tile layout
-            actual_tiles_per_row = texture_width // tile_width
-            rows = texture_height // tile_height
+            actual_tiles_per_row = width // tile_width
+            rows = height // tile_height
             total_tiles = actual_tiles_per_row * rows
-            
+
             # Create tileset info
             tileset_info = TilesetInfo(
                 name=name,
@@ -110,37 +164,31 @@ class TileManager:
                 tile_height=tile_height,
                 tiles_per_row=actual_tiles_per_row,
                 total_tiles=total_tiles,
-                texture=texture
+                texture=texture,           # SDL_Texture for map rendering
+                gl_texture_id=texture_id   # OpenGL texture for ImGui panel
             )
-            
             self.tilesets[name] = tileset_info
-            
+
             # Generate tile info for each tile in the tileset
             tiles = []
             for row in range(rows):
                 for col in range(actual_tiles_per_row):
-                    from imgui_bundle import imgui
-                    im_texture_ref = imgui.register_texture(texture)
                     tile_id = row * actual_tiles_per_row + col
-                    
                     source_rect = sdl3.SDL_Rect()
                     source_rect.x = col * tile_width
                     source_rect.y = row * tile_height
                     source_rect.w = tile_width
                     source_rect.h = tile_height
-                    
                     tile_info = TileInfo(
                         tileset_name=name,
-                        im_texture_ref=im_texture_ref
                         tile_id=tile_id,
                         source_rect=source_rect,
                         name=f"{name}_tile_{tile_id}"
                     )
                     tiles.append(tile_info)
-            
             self.tiles[name] = tiles
             logger.info(f"Loaded tileset '{name}' with {total_tiles} tiles ({actual_tiles_per_row}x{rows})")
-            
+
         except Exception as e:
             logger.error(f"Error loading tileset {name} from {path}: {e}")
     
@@ -180,14 +228,15 @@ class TileManager:
         src_frect.y = float(tile_info.source_rect.y)
         src_frect.w = float(tile_info.source_rect.w)
         src_frect.h = float(tile_info.source_rect.h)
-        
         result = sdl3.SDL_RenderTexture(self.renderer, tileset.texture, 
                                       ctypes.byref(src_frect), ctypes.byref(dest_rect))
         return result == 0
     
     def cleanup(self):
-        """Clean up resources"""
+        """Clean up resources"""    
         for tileset in self.tilesets.values():
+            if tileset.gl_texture_id:
+                glDeleteTextures(1, [tileset.gl_texture_id])
             if tileset.texture:
                 sdl3.SDL_DestroyTexture(tileset.texture)
         self.tilesets.clear()
