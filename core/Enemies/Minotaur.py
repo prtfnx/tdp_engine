@@ -1,8 +1,8 @@
 from core.Enemy import Enemy
 SPEED = 1
 class Minotaur(Enemy):
-    def __init__(self):
-        super().__init__(name="Minotaur", health=150, damage=25)
+    def __init__(self, coord_x=0, coord_y=0):
+        super().__init__(name="Minotaur", coord_x=coord_x, coord_y=coord_y, health=150, damage=25)
         self.sprite_idle_path="Minotaur_1/idle.png"
         self.sprite_idle_atlas="resources/Minotaur_1/idle.json"
         self.sprite_move_path="Minotaur_1/Walk.png"
