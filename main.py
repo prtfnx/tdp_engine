@@ -61,6 +61,7 @@ if TYPE_CHECKING:
 logger = setup_logger(__name__)
 LOAD_LEVEL: bool = False
 MUSIC: bool = True
+DEBUG_MODE: bool = True
 PLAYER_MODE: bool = False
 BASE_WIDTH: int = 1920
 BASE_HEIGHT:  int = 1080
@@ -144,6 +145,7 @@ def SDL_AppInit_func() -> Context:
     
 
     game_context = Context(renderer, window, base_width=BASE_WIDTH, base_height=BASE_HEIGHT)
+    game_context.debug_mode = DEBUG_MODE
     game_context.gl_context = gl_context
     game_context.is_gm = not(PLAYER_MODE)
     game_context.player = Player("John1", context=game_context)
