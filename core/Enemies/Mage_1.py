@@ -9,8 +9,8 @@ import math
 SPEED = 0.01
 SHOOT_CD = 1400
 class Mage_1(Enemy):
-    def __init__(self):
-        super().__init__(name="Mage_1", health=80, damage=15)        
+    def __init__(self, coord_x=0, coord_y=0):
+        super().__init__(name="Mage_1", coord_x=coord_x, coord_y=coord_y, health=80, damage=15)
         self.sprite_idle_path="spritesheets/mage-1-85x94.png"
         self.sprite_idle_atlas="resources/spritesheets/mage-1-85x94.json"
         self.sprite_move_path="spritesheets/mage-1-85x94.png"
