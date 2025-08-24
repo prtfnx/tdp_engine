@@ -75,6 +75,7 @@ def update_player_acceleration(cnt):
     left_keys = {sdl3.SDL_SCANCODE_A, sdl3.SDL_SCANCODE_LEFT}
     right_keys = {sdl3.SDL_SCANCODE_D, sdl3.SDL_SCANCODE_RIGHT}
     ESC = sdl3.SDL_SCANCODE_ESCAPE
+    CNTR = sdl3.SDL_SCANCODE_LCTRL
     ax = 0
     ay = 0
     # Y axis: up is negative, down is positive
@@ -91,3 +92,5 @@ def update_player_acceleration(cnt):
     cnt.player.set_acceleration(ax, ay)
     if ESC in cnt.pressed_keys:
         cnt.debug_mode = not cnt.debug_mode
+    if ESC in cnt.pressed_keys and CNTR in cnt.pressed_keys:
+        cnt.is_gm = not cnt.is_gm
