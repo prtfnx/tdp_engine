@@ -1,6 +1,8 @@
 # For pyinstaller build and deploy
 from email.mime import audio
 import re, sys, os
+
+from annotated_types import T
 if sys.stdout is None: sys.stdout = open(os.devnull, 'w')
 if sys.stderr is None: sys.stderr = open(os.devnull, 'w')
 # If running frozen, ensure current working directory points to the extracted
@@ -30,6 +32,8 @@ from core.Actions import Actions
 from core.actions_protocol import Position
 from core.MovementManager import MovementManager
 from core.EnemyManager import EnemyManager
+from core.TileMapManager import TileMapManager
+from core.TileManager import TileManager
 # Render imports
 from render import PaintManager
 from render.RenderManager import RenderManager
@@ -240,14 +244,15 @@ def SDL_AppInit_func() -> Context:
     
     test_table = game_context.add_table("test_table", BASE_WIDTH*3, BASE_HEIGHT*3)  
     if test_table:           
-        result1=game_context.Actions.create_sprite( test_table.table_id, "sprite_map", Position(0, 0), image_path="map.jpg", scale_x=0.5, scale_y=0.5, layer='map')
-        result2=game_context.Actions.create_sprite( test_table.table_id, "sprite_woman", Position(0, 0), image_path="woman.png", scale_x=0.5, scale_y=0.5,)
-        result3=game_context.Actions.create_sprite( test_table.table_id, "sprite_token1", Position(100, 100), image_path="token_1.png", scale_x=0.5, scale_y=0.5, collidable=True)
-        result4=game_context.Actions.create_sprite( test_table.table_id, "sprite_test", Position(200, 200), image_path="test.gif", scale_x=0.5, scale_y=0.5)
-        result5=game_context.Actions.create_sprite( test_table.table_id, "sprite_wall", Position(300, 300), image_path="wall1.png", scale_x=0.1, scale_y=0.1, collidable=False, layer='obstacles')
-        result51=game_context.Actions.create_sprite( test_table.table_id, "sprite_wall", Position(300, 300), image_path="wall1.png", scale_x=0.1, scale_y=0.1, collidable=True, layer='tokens')
+        result1=game_context.Actions.create_sprite( test_table.table_id, "sprite_map", Position(0, 0), image_path="map.jpg", scale_x=1, scale_y=1, layer='map')       
+
+        result2=game_context.Actions.create_sprite( test_table.table_id, "sprite_wall1", Position(300, -150), image_path="wall1.png", scale_x=0.1, scale_y=0.1, collidable=True, layer='obstacles')
+        result3=game_context.Actions.create_sprite( test_table.table_id, "sprite_wall2", Position(6, -150), image_path="wall1.png", scale_x=0.1, scale_y=0.1, collidable=True, layer='obstacles')
+        result4=game_context.Actions.create_sprite( test_table.table_id, "sprite_wall3", Position(300, 300), image_path="wall1.png", scale_x=0.1, scale_y=0.1, collidable=True, layer='obstacles')
+        result5=game_context.Actions.create_sprite( test_table.table_id, "sprite_wall4", Position(6, 300), image_path="wall1.png", scale_x=0.1, scale_y=0.1, collidable=True, layer='obstacles')
+        #result51=game_context.Actions.create_sprite( test_table.table_id, "sprite_wall", Position(300, 300), image_path="wall1.png", scale_x=0.1, scale_y=0.1, collidable=True, layer='tokens')
         
-        logger.info(f"Created sprites: {result1}, {result2}, {result3}, {result4}, {result5}")
+        logger.info(f"Created sprites:  {result4}, {result5}")
         # add player        
         result9=game_context.Actions.create_animated_sprite(test_table.table_id, "sprite_foots_run", Position(0, 0), image_path="soldier/foots/run.png", atlas_path="resources/soldier/foots/run.json", scale_x=0.5, scale_y=0.5, collidable=False, visible=False, frame_duration=30, is_player=True)
         result6=game_context.Actions.create_animated_sprite(test_table.table_id, "sprite_player_idle", Position(0, 0), image_path="soldier/handgun/idle.png", atlas_path="resources/soldier/handgun/idle.json", scale_x=0.5, scale_y=0.5, collidable=False,is_player=True, visible=True, frame_duration=100)
@@ -273,14 +278,14 @@ def SDL_AppInit_func() -> Context:
         game_context.EnemyManager = EnemyManager()
         game_context.EnemyManager.context = game_context
         logger.info("EnemyManager initialized.")
-        mage1 = game_context.EnemyManager.add_enemy('Mage_1')
-        minotaur1 = game_context.EnemyManager.add_enemy('Minotaur')        
-        i=0
-        for enemy in game_context.EnemyManager.enemies:            
+        mage1 = game_context.EnemyManager.add_enemy('Mage_1',coord_x=-600, coord_y=150)
+        minotaur1 = game_context.EnemyManager.add_enemy('Minotaur', coord_x=600, coord_y=150)
+
+        for enemy in game_context.EnemyManager.enemies:
             #order [idle,walk, attack] #TODO - proper system for managment for enemies
             sprites_list_order = []
             for sprite_path, atlas_path in zip(enemy.list_of_sprites_path, enemy.list_of_atlas_path):
-                result = game_context.Actions.create_animated_sprite(test_table.table_id, sprite_path + enemy.enemy_id, Position(100+i, 500), image_path=sprite_path, atlas_path=atlas_path, scale_x=2, scale_y=2, collidable=False, visible=True, frame_duration=100, is_player=False)
+                result = game_context.Actions.create_animated_sprite(test_table.table_id, sprite_path + enemy.enemy_id, Position(-400, 500), image_path=sprite_path, atlas_path=atlas_path, scale_x=2, scale_y=2, collidable=False, visible=True, frame_duration=100, is_player=False)
                 if result.success and result.data:
                     sprite = result.data['sprite']
                     enemy.sprite = sprite
@@ -294,7 +299,7 @@ def SDL_AppInit_func() -> Context:
                 "sprite_enemy_walk": sprites_list_order[1],
                 "sprite_enemy_attack": sprites_list_order[2]
             }
-            i += 200
+
         # Link to casting rays:
         game_context.EnemyManager.cast_ray = game_context.GeometryManager.cast_ray_and_check_unobstructed_vision
         game_context.EnemyManager.prepare_enemies()
@@ -303,6 +308,19 @@ def SDL_AppInit_func() -> Context:
         logger.error(f"Failed to initialize EnemyManager: {e}")
         game_context.EnemyManager = None
         raise(e)
+    # Initialize TileManager
+    try:
+        game_context.TileManager = TileManager(game_context)
+    except Exception as e:
+        logger.error(f"Failed to initialize TileManager: {e}")
+    
+    # Initialize TileMapManager
+    try:
+        game_context.TileMapManager = TileMapManager(game_context, game_context.TileManager)
+    except Exception as e:
+        logger.error(f"Failed to initialize TileMapManager: {e}")
+        game_context.TileMapManager = None
+
     # Initialize RenderManager
     try:
         logger.info("Initializing RenderManager...")
