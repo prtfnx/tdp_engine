@@ -40,8 +40,9 @@ class EnemyManager:
             enemy.prepare()
 
     def update(self, player, obstacles_np, dt):
-        for enemy in self.enemies:
-            enemy.update(self.cast_ray, player, dt, obstacles_np)
+        if not self.context.is_gm:
+            for enemy in self.enemies:
+                enemy.update(self.cast_ray, player, dt, obstacles_np)
 
     def create_enemy(self, enemy_type) -> Enemy | None:
         if enemy_class := self.ENEMY_TYPE_MAP.get(enemy_type):
